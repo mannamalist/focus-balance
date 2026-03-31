@@ -80,7 +80,7 @@
         .header-card { 
             text-align: center; 
             background: linear-gradient(145deg, #0d1117, #161b22);
-            padding: 50px 20px; 
+            padding: 40px 20px; 
             border-radius: 44px; 
             margin-bottom: 30px; 
             border: 1px solid var(--card-border); 
@@ -162,6 +162,7 @@
             letter-spacing: 1px; 
             margin-top: 10px;
             transition: transform 0.2s;
+            width: 100%;
         }
         
         .btn-main:active { transform: scale(0.98); }
@@ -195,6 +196,7 @@
             align-items: center; 
             justify-content: center; 
             border: 1px solid var(--card-border); 
+            cursor: pointer;
         }
 
         .timeline-box { background: var(--card); border-radius: 32px; padding: 12px; border: 1px solid var(--card-border); }
@@ -212,19 +214,21 @@
             font-weight: 500; 
             border: 1px solid transparent; 
             margin-right: 4px;
+            cursor: pointer;
         }
         .fill-deposit { background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.3); color: var(--deposit); }
         .fill-withdraw { background: rgba(255, 71, 87, 0.1); border-color: rgba(255, 71, 87, 0.3); color: var(--withdraw); }
 
         /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 2000; display: none; align-items: flex-end; }
-        .modal-content { background: #0d1117; width: 100%; border-radius: 32px 32px 0 0; padding: 32px; border-top: 1px solid var(--card-border); }
+        .modal-content { background: #0d1117; width: 100%; border-radius: 32px 32px 0 0; padding: 32px; border-top: 1px solid var(--card-border); box-sizing: border-box; }
         
         /* Reports Pie */
         .pie-container { width: 200px; height: 200px; border-radius: 50%; margin: 40px auto; position: relative; border: 4px solid var(--card-border); }
         .pie-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; background: var(--bg); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; text-align: center; }
         
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .duration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         label { font-size: 0.65rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 1px; }
 
         h2, h3 { letter-spacing: -0.5px; }
@@ -234,11 +238,12 @@
 
     <div id="edit-modal" class="modal-overlay">
         <div class="modal-content">
-            <div id="modal-header" class="modal-title" style="font-weight: 900; margin-bottom: 20px;">Edit Activity</div>
-            <div style="display: flex; gap: 10px;">
+            <div id="modal-header" class="modal-title" style="font-weight: 900; margin-bottom: 20px; font-size: 1.2rem;">Edit Activity</div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <div style="flex:1"><label>Hours</label><input type="number" id="edit-hrs" step="0.5" min="0"></div>
                 <div style="flex:1"><label>Mins</label><input type="number" id="edit-mins" step="5" min="0" max="55"></div>
             </div>
+            <label>Date</label><input type="date" id="edit-date">
             <button class="btn-main" onclick="confirmEdit()">Save Changes</button>
             <button class="btn-danger" style="width:100%;" onclick="confirmDelete()">Delete Entry</button>
             <button style="background:transparent; border:none; color:var(--text-dim); width:100%; margin-top:15px; cursor:pointer;" onclick="closeModal()">Close</button>
@@ -247,7 +252,7 @@
 
     <div id="act-edit-modal" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-title" style="font-weight: 900; margin-bottom: 20px;">Edit Configuration</div>
+            <div class="modal-title" style="font-weight: 900; margin-bottom: 20px; font-size: 1.2rem;">Edit Configuration</div>
             <label>Name</label><input type="text" id="act-edit-name">
             <label>Points / Hour</label><input type="number" id="act-edit-rate">
             <label>Type</label>
@@ -277,12 +282,18 @@
                 <h3 style="margin:0 0 15px 0; font-size: 1rem;">Log Activity</h3>
                 <label>Type</label>
                 <select id="sel-act"></select>
+                
                 <div class="input-grid">
-                    <div><label>Start</label><input type="time" id="start-time"></div>
-                    <div><label>Mins</label><input type="number" id="dur-mins" value="0" min="0" max="59" step="15"></div>
-                    <div><label>Hrs</label><input type="number" id="dur-hrs" value="1" min="0"></div>
+                    <div><label>Date</label><input type="date" id="log-date"></div>
+                    <div><label>Start Time</label><input type="time" id="start-time"></div>
                 </div>
-                <button class="btn-main" style="width:100%;" onclick="executeLog()">Commit to Flow</button>
+
+                <div class="duration-grid" style="margin-top: 10px;">
+                    <div><label>Hours</label><input type="number" id="dur-hrs" value="1" min="0"></div>
+                    <div><label>Minutes</label><input type="number" id="dur-mins" value="0" min="0" max="59" step="1"></div>
+                </div>
+
+                <button class="btn-main" style="margin-top:20px;" onclick="executeLog()">Commit to Flow</button>
             </div>
         </div>
 
@@ -314,7 +325,7 @@
                 <input type="text" id="in-name" placeholder="Activity Name">
                 <input type="number" id="in-rate" placeholder="Points / Hour">
                 <select id="in-cat"><option value="deposit">Build</option><option value="withdraw">Drain</option></select>
-                <button class="btn-main" style="width:100%;" onclick="saveNewAct()">Save Activity</button>
+                <button class="btn-main" onclick="saveNewAct()">Save Activity</button>
             </div>
             <div style="text-align: center; color: var(--text-dim); font-size: 0.6rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Tap an activity to edit</div>
             <div id="list-build"></div>
@@ -335,18 +346,27 @@
         let history = JSON.parse(localStorage.getItem('f_flow_history')) || [];
         let activities = JSON.parse(localStorage.getItem('f_flow_final')) || [
             { name: "Deep Work", rate: 20, cat: "deposit" },
-            { name: "Social Media", rate: -20, cat: "withdraw" }
+            { name: "Social Media", rate: -20, cat: "withdraw" },
+            { name: "Exercise", rate: 15, cat: "deposit" }
         ];
         
         let viewingDate = new Date();
         let editingLogIdx = null;
         let editingActIdx = null;
 
+        // Initialize Defaults
         const setNow = () => {
             const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            
+            document.getElementById('log-date').value = `${year}-${month}-${day}`;
             document.getElementById('start-time').value = d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
+            
+            document.getElementById('range-from').value = `${year}-${month}-${day}`;
+            document.getElementById('range-to').value = `${year}-${month}-${day}`;
         };
-        setNow();
 
         function tab(p, el) {
             document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
@@ -355,39 +375,84 @@
             el.classList.add('active');
             if(p === 'day') updateDayView();
             if(p === 'settings') refresh();
+            if(p === 'dash') setNow();
         }
         
         function reportsTab(el) { tab('reports', el); renderReports(); }
 
         function executeLog() {
-            const act = activities[document.getElementById('sel-act').value];
+            const actIndex = document.getElementById('sel-act').value;
+            const act = activities[actIndex];
+            const dateVal = document.getElementById('log-date').value;
             const startTimeStr = document.getElementById('start-time').value;
             const h = parseFloat(document.getElementById('dur-hrs').value) || 0;
             const m = parseFloat(document.getElementById('dur-mins').value) || 0;
             const duration = h + (m/60);
-            if(!startTimeStr || duration <= 0) return;
-            balance = Math.max(-60, Math.min(balance + (act.rate * duration), 140));
-            history.push({ name: act.name, duration: duration, startTime: startTimeStr, date: new Date().toISOString().split('T')[0], cat: act.cat, rate: act.rate });
-            saveAll(); tab('day', document.querySelectorAll('.nav-item')[1]);
+
+            if(!dateVal || !startTimeStr || duration <= 0) {
+                alert("Please fill in all fields correctly.");
+                return;
+            }
+
+            // Update balance
+            balance = Math.max(-100, Math.min(balance + (act.rate * duration), 200));
+            
+            // Add to history
+            history.push({ 
+                name: act.name, 
+                duration: duration, 
+                startTime: startTimeStr, 
+                date: dateVal, 
+                cat: act.cat, 
+                rate: act.rate 
+            });
+
+            saveAll();
+            // Switch to Day view to see the entry
+            viewingDate = new Date(dateVal + "T12:00:00"); // Center on selected date
+            tab('day', document.querySelectorAll('.nav-item')[1]);
         }
 
         function updateDayView() {
-            const dateStr = viewingDate.toISOString().split('T')[0];
+            const year = viewingDate.getFullYear();
+            const month = String(viewingDate.getMonth() + 1).padStart(2, '0');
+            const day = String(viewingDate.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+
             document.getElementById('day-date-label').innerText = viewingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
             const list = document.getElementById('timeline-list');
             list.innerHTML = '';
-            let dayGrid = Array(24).fill(null);
+            
+            // Map logs to specific hours for visualization
+            let dayGrid = Array(24).fill(null).map(() => []);
+
             history.forEach((log, idx) => {
                 if (log.date === dateStr) {
                     const [h, m] = log.startTime.split(':').map(Number);
-                    const startDec = h + (m/60);
-                    const endDec = startDec + log.duration;
-                    for(let i=0; i<24; i++) if(startDec < (i + 1) && endDec > i) dayGrid[i] = { ...log, idx };
+                    const hourIdx = h;
+                    dayGrid[hourIdx].push({ ...log, idx });
                 }
             });
+
             for(let i=0; i<24; i++) {
-                const log = dayGrid[i];
-                list.innerHTML += `<div class="hour-row"><div class="h-time">${i}:00</div><div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}" onclick="${log ? `openEdit(${log.idx})` : ''}">${log ? `${log.name} (${log.duration.toFixed(1)}h)` : ''}</div></div>`;
+                const logs = dayGrid[i];
+                let content = "";
+                if (logs.length > 0) {
+                    logs.forEach(log => {
+                        content += `<div class="h-block ${log.cat==='deposit'?'fill-deposit':'fill-withdraw'}" onclick="openEdit(${log.idx})">
+                            ${log.name} (${log.duration.toFixed(1)}h)
+                        </div>`;
+                    });
+                } else {
+                    content = `<div class="h-block"></div>`;
+                }
+
+                list.innerHTML += `
+                    <div class="hour-row">
+                        <div class="h-time">${i}:00</div>
+                        ${content}
+                    </div>`;
             }
         }
 
@@ -397,29 +462,88 @@
             document.getElementById('modal-header').innerText = `Edit: ${log.name}`;
             document.getElementById('edit-hrs').value = Math.floor(log.duration);
             document.getElementById('edit-mins').value = Math.round((log.duration % 1) * 60);
+            document.getElementById('edit-date').value = log.date;
             document.getElementById('edit-modal').style.display = 'flex';
         }
+
         function closeModal() { document.getElementById('edit-modal').style.display = 'none'; editingLogIdx = null; }
+
         function confirmEdit() {
             const log = history[editingLogIdx];
             const h = parseFloat(document.getElementById('edit-hrs').value) || 0;
             const m = parseFloat(document.getElementById('edit-mins').value) || 0;
+            const newDate = document.getElementById('edit-date').value;
             const newDuration = h + (m/60);
+
             if (newDuration > 0) {
-                balance = Math.max(-60, Math.min(balance - (log.rate * log.duration) + (log.rate * newDuration), 140));
+                // Revert old points, add new points
+                balance = Math.max(-100, Math.min(balance - (log.rate * log.duration) + (log.rate * newDuration), 200));
                 history[editingLogIdx].duration = newDuration;
-                saveAll(); closeModal();
-            }
-        }
-        function confirmDelete() {
-            if (confirm("Delete this activity log?")) {
-                const log = history[editingLogIdx];
-                balance = Math.max(-60, Math.min(balance - (log.rate * log.duration), 140));
-                history.splice(editingLogIdx, 1);
-                saveAll(); closeModal();
+                history[editingLogIdx].date = newDate;
+                saveAll(); 
+                closeModal();
             }
         }
 
+        function confirmDelete() {
+            if (confirm("Delete this activity log?")) {
+                const log = history[editingLogIdx];
+                balance = Math.max(-100, Math.min(balance - (log.rate * log.duration), 200));
+                history.splice(editingLogIdx, 1);
+                saveAll(); 
+                closeModal();
+            }
+        }
+
+        function saveAll() {
+            localStorage.setItem('f_flow_history', JSON.stringify(history));
+            localStorage.setItem('f_flow_balance', balance);
+            localStorage.setItem('f_flow_final', JSON.stringify(activities));
+            refresh();
+        }
+
+        function changeDay(offset) { 
+            viewingDate.setDate(viewingDate.getDate() + offset); 
+            updateDayView(); 
+        }
+
+        function refresh() {
+            document.getElementById('disp-bal').innerText = Math.round(balance);
+            const fill = document.getElementById('fill-bar');
+            const ins = document.getElementById('insight-display');
+            
+            // Scaled 0-100 logic for UI bar
+            const visualPerc = Math.max(0, Math.min(((balance + 50) / 150) * 100, 100));
+            fill.style.width = visualPerc + "%";
+
+            let label = ""; let desc = "";
+            if (balance >= 120) { fill.style.background = "var(--danger)"; label = "Redline"; desc = "Critical burnout risk. Rest now."; } 
+            else if (balance >= 80) { fill.style.background = "var(--overheat)"; label = "Peak"; desc = "High output maintained."; } 
+            else if (balance >= 40) { fill.style.background = "var(--deposit)"; label = "Optimal"; desc = "Perfect flow state."; } 
+            else if (balance >= 10) { fill.style.background = "var(--accent)"; label = "Steady"; desc = "Keep building momentum."; } 
+            else if (balance >= -10) { fill.style.background = "#475569"; label = "Neutral"; desc = "System idle."; } 
+            else { fill.style.background = "var(--withdraw)"; label = "Deficit"; desc = "Drain exceeds build. Recovering..."; }
+            
+            ins.innerHTML = `<span class="status-label" style="color:${fill.style.background}">${label}</span><span class="status-desc">${desc}</span>`;
+            
+            document.getElementById('sel-act').innerHTML = activities.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
+            
+            const bList = document.getElementById('list-build'); 
+            const dList = document.getElementById('list-drain');
+            bList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 5px; display:block;">Build Activities</span>';
+            dList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:20px 0 10px 5px; display:block;">Drain Activities</span>';
+            
+            activities.forEach((a, i) => {
+                const html = `<div class="card" onclick="openActEdit(${i})" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-radius:16px;">
+                    <div><b>${a.name}</b><br><small style="color:var(--text-dim)">${a.rate} pts/hr</small></div>
+                    <span style="color:var(--accent); font-size: 0.65rem; font-weight: 800;">EDIT</span>
+                </div>`;
+                if(a.cat === 'deposit') bList.innerHTML += html; else dList.innerHTML += html;
+            });
+            updateDayView();
+        }
+
+        // --- Settings / Modal Logic for Activities ---
         function openActEdit(index) {
             editingActIdx = index;
             const act = activities[index];
@@ -436,87 +560,69 @@
             if(n && !isNaN(r)) { activities[editingActIdx] = { name: n, rate: r, cat: c }; saveAll(); closeActModal(); }
         }
         function confirmActDelete() {
-            if(confirm(`Completely remove "${activities[editingActIdx].name}" from settings?`)) { activities.splice(editingActIdx, 1); saveAll(); closeActModal(); }
+            if(confirm(`Remove "${activities[editingActIdx].name}"?`)) { activities.splice(editingActIdx, 1); saveAll(); closeActModal(); }
         }
-
         function saveNewAct() {
-            const n = document.getElementById('in-name').value; const r = parseFloat(document.getElementById('in-rate').value); const c = document.getElementById('in-cat').value;
-            if(n && !isNaN(r)) { activities.push({ name: n, rate: r, cat: c }); document.getElementById('in-name').value = ''; document.getElementById('in-rate').value = ''; saveAll(); }
+            const n = document.getElementById('in-name').value; 
+            const r = parseFloat(document.getElementById('in-rate').value); 
+            const c = document.getElementById('in-cat').value;
+            if(n && !isNaN(r)) { 
+                activities.push({ name: n, rate: r, cat: c }); 
+                document.getElementById('in-name').value = ''; 
+                document.getElementById('in-rate').value = ''; 
+                saveAll(); 
+            }
         }
-
-        function saveAll() {
-            localStorage.setItem('f_flow_history', JSON.stringify(history));
-            localStorage.setItem('f_flow_balance', balance);
-            localStorage.setItem('f_flow_final', JSON.stringify(activities));
-            refresh();
-        }
-
-        function changeDay(offset) { viewingDate.setDate(viewingDate.getDate() + offset); updateDayView(); }
-
-        function renderReports() {
-            const pie = document.getElementById('pie-chart');
-            const legend = document.getElementById('pie-legend');
-            const centerText = document.getElementById('pie-center-text');
-            let stats = {}; let total = 0; let buildTotal = 0; let drainTotal = 0;
-            history.forEach(s => { stats[s.name] = (stats[s.name]||0)+s.duration; total += s.duration; if(s.cat === 'deposit') buildTotal += s.duration; else drainTotal += s.duration; });
-            if (total === 0) { pie.style.background = 'var(--empty)'; legend.innerHTML = ''; centerText.innerText = "Empty"; return; }
-            let sorted = Object.entries(stats).sort((a,b) => {
-                const catA = (history.find(h => h.name === a[0]) || {}).cat || 'deposit';
-                const catB = (history.find(h => h.name === b[0]) || {}).cat || 'deposit';
-                return catA === catB ? 0 : catA === 'deposit' ? -1 : 1;
-            });
-            let current = 0; let g = []; legend.innerHTML = '';
-            sorted.forEach(([name, dur]) => {
-                const item = history.find(h => h.name === name);
-                const color = item && item.cat === 'withdraw' ? 'var(--withdraw)' : 'var(--accent)';
-                const p = (dur/total)*100; g.push(`${color} ${current}% ${current+p}%`); current+=p;
-                legend.innerHTML += `<div class="legend-item" style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--card-border); font-size:0.8rem;"><span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name} <span style="opacity:0.5; font-size:0.7rem;">(${Math.round(p)}%)</span></span><span style="font-weight:900;">${dur.toFixed(1)}h</span></div>`;
-            });
-            pie.style.background = `conic-gradient(${g.join(',')})`;
-            centerText.innerHTML = `<div style="color:var(--accent)">BUILD: ${Math.round((buildTotal/total)*100)}%</div><div style="color:var(--withdraw)">DRAIN: ${Math.round((drainTotal/total)*100)}%</div><div style="margin-top:5px; opacity:0.6; font-size:0.6rem;">${total.toFixed(1)}h TOTAL</div>`;
-        }
-
-        function refresh() {
-            document.getElementById('disp-bal').innerText = Math.round(balance);
-            const fill = document.getElementById('fill-bar');
-            const ins = document.getElementById('insight-display');
-            const visualPerc = ((balance + 60) / 200) * 100;
-            fill.style.width = visualPerc + "%";
-            let label = ""; let desc = "";
-            if (balance >= 140) { fill.style.background = "var(--danger)"; label = "Critical"; desc = "System overload. Cooldown required."; } 
-            else if (balance >= 115) { fill.style.background = "var(--danger)"; label = "Redlining"; desc = "Beyond sustainable capacity."; } 
-            else if (balance >= 95) { fill.style.background = "var(--overheat)"; label = "Maximum"; desc = "Peak output. Monitor for burnout."; } 
-            else if (balance >= 75) { fill.style.background = "var(--deposit)"; label = "Optimal"; desc = "Perfect flow. Keep this zone."; } 
-            else if (balance >= 55) { fill.style.background = "var(--accent)"; label = "Stable"; desc = "Good efficiency. Keep it up."; } 
-            else if (balance >= 35) { fill.style.background = "#64748b"; label = "Adequate"; desc = "Operational but losing momentum."; } 
-            else if (balance >= 1) { fill.style.background = "#475569"; label = "Slacking"; desc = "System stagnant. Build now."; } 
-            else if (balance === 0) { fill.style.background = "#1e293b"; label = "Void"; desc = "Zero momentum detected."; } 
-            else { fill.style.background = "var(--withdraw)"; label = "Debt"; desc = "Actively destroying potential."; }
-            ins.innerHTML = `<span class="status-label" style="color:${fill.style.background}">${label}</span><span class="status-desc">${desc}</span>`;
-            document.getElementById('sel-act').innerHTML = activities.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
-            const bList = document.getElementById('list-build'); const dList = document.getElementById('list-drain');
-            bList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 5px; display:block; letter-spacing:1px;">Build Activities</span>';
-            dList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:20px 0 10px 5px; display:block; letter-spacing:1px;">Drain Activities</span>';
-            activities.forEach((a, i) => {
-                const html = `<div class="card" onclick="openActEdit(${i})" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-radius:16px;"><div><b>${a.name}</b><br><small style="color:var(--text-dim)">${a.rate} pts/hr</small></div><span style="color:var(--accent); font-size: 0.65rem; font-weight: 800; text-transform:uppercase;">Edit</span></div>`;
-                if(a.cat === 'deposit') bList.innerHTML += html; else dList.innerHTML += html;
-            });
-            updateDayView();
-        }
-
         function wipeAllData() {
-            if(confirm("Wipe logged history and reset balance? Your custom activities will be kept.")) {
-                history = [];
-                balance = 0;
+            if(confirm("Wipe history and reset balance?")) {
+                history = []; balance = 0;
                 localStorage.setItem('f_flow_history', JSON.stringify(history));
                 localStorage.setItem('f_flow_balance', balance);
                 refresh();
             }
         }
-        
-        const todayStr = new Date().toISOString().split('T')[0];
-        document.getElementById('range-from').value = todayStr;
-        document.getElementById('range-to').value = todayStr;
+
+        function renderReports() {
+            const pie = document.getElementById('pie-chart');
+            const legend = document.getElementById('pie-legend');
+            const centerText = document.getElementById('pie-center-text');
+            const from = document.getElementById('range-from').value;
+            const to = document.getElementById('range-to').value;
+
+            let stats = {}; let total = 0; let buildTotal = 0; let drainTotal = 0;
+            
+            history.forEach(s => {
+                if(s.date >= from && s.date <= to) {
+                    stats[s.name] = (stats[s.name]||0)+s.duration; 
+                    total += s.duration; 
+                    if(s.cat === 'deposit') buildTotal += s.duration; else drainTotal += s.duration;
+                }
+            });
+
+            if (total === 0) { 
+                pie.style.background = 'var(--empty)'; 
+                legend.innerHTML = ''; 
+                centerText.innerText = "No Data"; 
+                return; 
+            }
+
+            let sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]);
+            let current = 0; let g = []; legend.innerHTML = '';
+            
+            sorted.forEach(([name, dur]) => {
+                const item = history.find(h => h.name === name);
+                const color = item && item.cat === 'withdraw' ? 'var(--withdraw)' : 'var(--accent)';
+                const p = (dur/total)*100; g.push(`${color} ${current}% ${current+p}%`); current+=p;
+                legend.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--card-border); font-size:0.8rem;">
+                    <span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name}</span>
+                    <span style="font-weight:900;">${dur.toFixed(1)}h</span>
+                </div>`;
+            });
+            pie.style.background = `conic-gradient(${g.join(',')})`;
+            centerText.innerHTML = `<div style="color:var(--accent)">+${buildTotal.toFixed(1)}h</div><div style="color:var(--withdraw)">-${drainTotal.toFixed(1)}h</div>`;
+        }
+
+        setNow();
         refresh();
     </script>
 </body>
