@@ -24,12 +24,11 @@
         .header-card { text-align: center; background: radial-gradient(circle at top right, #1e293b, #11141d); padding: 40px 20px; border-radius: 40px; margin-bottom: 25px; border: 1px solid #1e293b; }
         .balance-val { font-size: 5rem; font-weight: 900; margin: 0; letter-spacing: -4px; line-height: 1; }
         .progress-container { height: 12px; background: var(--empty); border-radius: 10px; margin: 30px 0; overflow: hidden; position: relative; }
-        #fill-bar { height: 100%; width: 50%; transition: 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
-        .marker { position: absolute; top: 0; left: 30%; width: 2px; height: 100%; background: white; opacity: 0.4; } 
+        #fill-bar { height: 100%; width: 50%; transition: 1.2s cubic-bezier(0.19, 1, 0.22, 1); border-radius: 10px; }
 
         .insight-box { background: rgba(15, 23, 42, 0.6); padding: 18px; border-radius: 20px; font-size: 0.85rem; border-left: 4px solid var(--accent); min-height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; }
         .status-label { font-weight: 900; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }
-        .status-desc { color: #f8fafc; opacity: 0.9; font-size: 0.8rem; }
+        .status-desc { color: #f8fafc; opacity: 0.8; font-size: 0.8rem; margin-top: 2px; }
 
         .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #1e293b; margin-bottom: 25px; }
         input, select, button { width: 100%; padding: 16px; margin: 10px 0; border-radius: 18px; border: none; background: #1c2331; color: white; font-size: 1rem; box-sizing: border-box; }
@@ -39,23 +38,22 @@
         .date-shifter { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 15px 20px; border-radius: 25px; margin-bottom: 15px; border: 1px solid #1e293b; }
         .shift-btn { background: #1c2331; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 900; border: 1px solid #334155; }
 
-        .timeline-box { background: var(--card); border-radius: 35px; padding: 20px; border: 1px solid #1e293b; }
+        .timeline-box { background: var(--card); border-radius: 35px; padding: 10px; border: 1px solid #1e293b; }
         .hour-row { display: flex; height: 45px; align-items: center; border-bottom: 1px solid #0f172a; }
-        .h-time { width: 55px; font-size: 0.65rem; color: var(--text-dim); font-weight: 800; }
-        .h-block { flex-grow: 1; height: 36px; border-radius: 12px; background: #05070a; display: flex; align-items: center; padding-left: 15px; font-size: 0.8rem; font-weight: 600; border: 1px solid #1e293b; }
+        .h-time { width: 55px; font-size: 0.65rem; color: var(--text-dim); font-weight: 800; padding-left: 10px; }
+        .h-block { flex-grow: 1; height: 34px; border-radius: 10px; background: #05070a; display: flex; align-items: center; padding-left: 12px; font-size: 0.7rem; font-weight: 600; border: 1px solid #1e293b; overflow: hidden; white-space: nowrap; margin-right: 5px; }
         .fill-deposit { background: rgba(16, 185, 129, 0.15); border-color: var(--deposit); color: var(--deposit); }
         .fill-withdraw { background: rgba(239, 68, 68, 0.15); border-color: var(--withdraw); color: var(--withdraw); }
 
         .pie-container { width: 220px; height: 220px; border-radius: 50%; margin: 30px auto; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.5); background: var(--empty); }
         .pie-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; background: var(--card); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: white; text-align: center; font-weight: 900; line-height: 1.4; }
         .legend-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; font-size: 0.85rem; }
-        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; }
-
-        .cat-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); margin: 10px 0 10px 10px; display: block; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; }
+        
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+        label { font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; display: block; margin-bottom: 4px; padding-left: 4px; }
     </style>
 </head>
-<body ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)">
+<body>
 
     <div class="app-container">
         <div id="page-dash" class="page active">
@@ -64,7 +62,6 @@
                 <div class="balance-val" id="disp-bal">0</div>
                 <div class="progress-container">
                     <div id="fill-bar"></div>
-                    <div class="marker"></div>
                 </div>
                 <div id="insight-display" class="insight-box">
                     <span class="status-label">Analyzing</span>
@@ -75,12 +72,12 @@
             <div class="card">
                 <h3 style="margin:0 0 15px 0;">Log Activity</h3>
                 <select id="sel-act"></select>
-                <div style="display:flex; justify-content:space-between; margin-top:15px; font-size: 0.85rem; font-weight: bold;">
-                    <span>Start: <span id="start-label" style="color:var(--accent)">09:00</span></span>
-                    <span>For: <span id="dur-label" style="color:var(--accent)">1h</span></span>
+                
+                <div class="input-grid">
+                    <div><label>Start</label><input type="time" id="start-time"></div>
+                    <div><label>Hrs</label><input type="number" id="dur-hrs" value="1" min="0"></div>
+                    <div><label>Mins</label><input type="number" id="dur-mins" value="0" min="0" max="59" step="15"></div>
                 </div>
-                <input type="range" id="start-slider" min="0" max="23" value="9">
-                <input type="range" id="dur-slider" min="1" max="12" value="1">
                 <button class="btn-main" onclick="executeLog()">Commit to Flow</button>
             </div>
         </div>
@@ -101,9 +98,7 @@
                     <input type="date" id="range-from" style="margin:0; font-size:0.8rem;">
                     <input type="date" id="range-to" style="margin:0; font-size:0.8rem;" onchange="renderReports()">
                 </div>
-                <div class="pie-container" id="pie-chart">
-                    <div class="pie-hole" id="pie-center-text">Data</div>
-                </div>
+                <div class="pie-container" id="pie-chart"><div class="pie-hole" id="pie-center-text">Data</div></div>
                 <div id="pie-legend"></div>
             </div>
         </div>
@@ -113,20 +108,12 @@
             <div class="card">
                 <input type="text" id="in-name" placeholder="Activity Name">
                 <input type="number" id="in-rate" placeholder="Points / Hour">
-                <select id="in-cat">
-                    <option value="deposit">Build</option>
-                    <option value="withdraw">Drain</option>
-                </select>
+                <select id="in-cat"><option value="deposit">Build</option><option value="withdraw">Drain</option></select>
                 <button class="btn-main" onclick="saveNewAct()">Save Activity</button>
             </div>
-            
-            <span class="cat-title">Build Activities</span>
-            <div class="card" id="list-build" style="padding:10px 25px;"></div>
-            
-            <span class="cat-title">Drain Activities</span>
-            <div class="card" id="list-drain" style="padding:10px 25px;"></div>
-
-            <button class="btn-danger" onclick="wipeAllData()">WIPE ALL HISTORY & BALANCE</button>
+            <div id="list-build"></div>
+            <div id="list-drain"></div>
+            <button class="btn-danger" onclick="wipeAllData()">WIPE ALL HISTORY</button>
         </div>
     </div>
 
@@ -146,6 +133,11 @@
         ];
         
         let viewingDate = new Date();
+        const setNow = () => {
+            const d = new Date();
+            document.getElementById('start-time').value = d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
+        };
+        setNow();
 
         function tab(p, el) {
             document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
@@ -159,14 +151,26 @@
 
         function executeLog() {
             const act = activities[document.getElementById('sel-act').value];
-            const start = parseInt(document.getElementById('start-slider').value);
-            const duration = parseInt(document.getElementById('dur-slider').value);
+            const startTimeStr = document.getElementById('start-time').value;
+            const h = parseFloat(document.getElementById('dur-hrs').value) || 0;
+            const m = parseFloat(document.getElementById('dur-mins').value) || 0;
+            const duration = h + (m/60);
+            
+            if(!startTimeStr || duration <= 0) return;
+
             balance = Math.max(-60, Math.min(balance + (act.rate * duration), 140));
             localStorage.setItem('f_flow_balance', balance);
-            // WE SAVE THE CATEGORY INSIDE THE HISTORY SO COLOR NEVER BREAKS
-            history.push({ name: act.name, duration: duration, startHour: start, date: new Date().toISOString().split('T')[0], cat: act.cat });
+
+            history.push({ 
+                name: act.name, 
+                duration: duration, 
+                startTime: startTimeStr, 
+                date: new Date().toISOString().split('T')[0], 
+                cat: act.cat 
+            });
             localStorage.setItem('f_flow_history', JSON.stringify(history));
             refresh();
+            tab('day', document.querySelectorAll('.nav-item')[1]);
         }
 
         function updateDayView() {
@@ -174,70 +178,74 @@
             document.getElementById('day-date-label').innerText = viewingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const list = document.getElementById('timeline-list');
             list.innerHTML = '';
+            
             let dayGrid = Array(24).fill(null);
-            history.filter(h => h.date === dateStr).forEach(log => {
-                for(let i=0; i < log.duration; i++) dayGrid[(log.startHour + i) % 24] = log;
+            
+            // Filter logs for selected day
+            const logsForDay = history.filter(h => h.date === dateStr);
+            
+            logsForDay.forEach(log => {
+                const [h, m] = log.startTime.split(':').map(Number);
+                const startDec = h + (m/60);
+                const endDec = startDec + log.duration;
+
+                for(let i=0; i<24; i++) {
+                    // Check if the activity overlaps with this hour block
+                    if(startDec < (i + 1) && endDec > i) {
+                        dayGrid[i] = log;
+                    }
+                }
             });
+
             for(let i=0; i<24; i++) {
                 const log = dayGrid[i];
-                list.innerHTML += `<div class="hour-row"><div class="h-time">${i}:00</div><div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}">${log?log.name:''}</div></div>`;
+                list.innerHTML += `
+                    <div class="hour-row">
+                        <div class="h-time">${i}:00</div>
+                        <div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}">
+                            ${log ? `${log.name} (${log.startTime})` : ''}
+                        </div>
+                    </div>`;
             }
         }
 
         function changeDay(offset) { viewingDate.setDate(viewingDate.getDate() + offset); updateDayView(); }
 
-        let touchstartX = 0; let touchendX = 0;
-        function handleTouchStart(e) { touchstartX = e.changedTouches[0].screenX; }
-        function handleTouchEnd(e) { 
-            touchendX = e.changedTouches[0].screenX; 
-            if (document.getElementById('page-day').classList.contains('active')) {
-                if (touchendX < touchstartX - 80) changeDay(1);
-                if (touchendX > touchstartX + 80) changeDay(-1);
-            }
-        }
-
         function renderReports() {
             const pie = document.getElementById('pie-chart');
             const legend = document.getElementById('pie-legend');
             const centerText = document.getElementById('pie-center-text');
-            
-            let stats = {}; let total = 0;
-            let buildTotal = 0; let drainTotal = 0;
+            let stats = {}; let total = 0; let buildTotal = 0; let drainTotal = 0;
 
             history.forEach(s => { 
                 stats[s.name] = (stats[s.name]||0)+s.duration; 
                 total += s.duration; 
-                if(s.cat === 'deposit') buildTotal += s.duration;
-                else drainTotal += s.duration;
+                if(s.cat === 'deposit') buildTotal += s.duration; else drainTotal += s.duration;
             });
 
             if (total === 0) { pie.style.background = 'var(--empty)'; legend.innerHTML = ''; centerText.innerText = "Empty"; return; }
             
-            // ORDER: All Build logs together, then all Drain logs together
             let sorted = Object.entries(stats).sort((a,b) => {
-                const itemA = history.find(h => h.name === a[0]);
-                const itemB = history.find(h => h.name === b[0]);
-                const catA = itemA ? itemA.cat : 'deposit';
-                const catB = itemB ? itemB.cat : 'deposit';
+                const catA = (history.find(h => h.name === a[0]) || {}).cat || 'deposit';
+                const catB = (history.find(h => h.name === b[0]) || {}).cat || 'deposit';
                 return catA === catB ? 0 : catA === 'deposit' ? -1 : 1;
             });
 
             let current = 0; let g = []; legend.innerHTML = '';
             sorted.forEach(([name, dur]) => {
-                // GET COLOR FROM HISTORY CAT, NOT FROM SETTINGS
                 const item = history.find(h => h.name === name);
                 const color = item && item.cat === 'withdraw' ? 'var(--withdraw)' : 'var(--accent)';
                 const p = (dur/total)*100;
                 g.push(`${color} ${current}% ${current+p}%`);
                 current+=p;
-                legend.innerHTML += `<div class="legend-item"><span><span class="legend-dot" style="background:${color}"></span>${name}</span><span style="font-weight:900;">${dur}h</span></div>`;
+                legend.innerHTML += `<div class="legend-item"><span><span style="width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name}</span><span style="font-weight:900;">${dur.toFixed(1)}h</span></div>`;
             });
 
             pie.style.background = `conic-gradient(${g.join(',')})`;
             centerText.innerHTML = `
                 <div style="color:var(--accent)">BUILD: ${Math.round((buildTotal/total)*100)}%</div>
                 <div style="color:var(--withdraw)">DRAIN: ${Math.round((drainTotal/total)*100)}%</div>
-                <div style="margin-top:5px; opacity:0.6; font-size:0.6rem;">${total}h TOTAL</div>
+                <div style="margin-top:5px; opacity:0.6; font-size:0.6rem;">${total.toFixed(1)}h TOTAL</div>
             `;
         }
 
@@ -263,13 +271,11 @@
             ins.innerHTML = `<span class="status-label" style="color:${fill.style.background}">${label}</span><span class="status-desc">${desc}</span>`;
             document.getElementById('sel-act').innerHTML = activities.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
             
-            const buildList = document.getElementById('list-build');
-            const drainList = document.getElementById('list-drain');
-            buildList.innerHTML = ''; drainList.innerHTML = '';
+            const bList = document.getElementById('list-build'); const dList = document.getElementById('list-drain');
+            bList.innerHTML = '<span class="cat-title">Build Activities</span>'; dList.innerHTML = '<span class="cat-title">Drain Activities</span>';
             activities.forEach((a, i) => {
-                const html = `<div class="item-row"><div><b>${a.name}</b><br><small style="color:var(--text-dim)">${a.rate} pts/hr</small></div><span style="color:#f87171; font-weight:800; cursor:pointer; font-size:0.75rem;" onclick="deleteAct(${i})">REMOVE</span></div>`;
-                if(a.cat === 'deposit') buildList.innerHTML += html;
-                else drainList.innerHTML += html;
+                const html = `<div class="card" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;"><div><b>${a.name}</b><br><small>${a.rate} pts/hr</small></div><span style="color:#f87171; font-weight:800; cursor:pointer;" onclick="deleteAct(${i})">REMOVE</span></div>`;
+                if(a.cat === 'deposit') bList.innerHTML += html; else dList.innerHTML += html;
             });
             updateDayView();
         }
@@ -281,21 +287,10 @@
             if(n && !isNaN(r)) { activities.push({ name: n, rate: r, cat: c }); refresh(); document.getElementById('in-name').value = ''; document.getElementById('in-rate').value = ''; }
         }
 
-        function deleteAct(i) {
-            if(confirm(`Are you sure you want to remove "${activities[i].name}"? This will not change your past balance but will remove it from future logs.`)) { activities.splice(i, 1); refresh(); }
-        }
+        function deleteAct(i) { if(confirm(`Remove "${activities[i].name}"?`)) { activities.splice(i, 1); refresh(); } }
 
-        function wipeAllData() {
-            if(confirm("DANGER: This will permanently delete all your logged hours and reset your balance to 0. Proceed?")) {
-                balance = 0; history = [];
-                localStorage.setItem('f_flow_balance', 0);
-                localStorage.setItem('f_flow_history', JSON.stringify([]));
-                refresh();
-            }
-        }
+        function wipeAllData() { if(confirm("Wipe everything?")) { balance = 0; history = []; localStorage.clear(); location.reload(); } }
 
-        document.getElementById('start-slider').oninput = e => document.getElementById('start-label').innerText = e.target.value.padStart(2, '0') + ":00";
-        document.getElementById('dur-slider').oninput = e => document.getElementById('dur-label').innerText = e.target.value + "h";
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('range-from').value = todayStr;
         document.getElementById('range-to').value = todayStr;
