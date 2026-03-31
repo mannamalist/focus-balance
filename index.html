@@ -368,28 +368,23 @@
         let history = JSON.parse(localStorage.getItem('f_flow_history')) || [];
         let activities = JSON.parse(localStorage.getItem('f_flow_final')) || [
             { name: "Deep Work", rate: 20, cat: "deposit" },
-            { name: "Social Media", rate: -20, cat: "withdraw" },
-            { name: "Exercise", rate: 15, cat: "deposit" }
+            { name: "Social Media", rate: -20, cat: "withdraw" }
         ];
         
         let viewingDate = new Date();
         let editingLogIdx = null;
         let editingActIdx = null;
 
-        // Initialize Defaults
         const setNow = () => {
             const d = new Date();
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
-            
             const formattedDate = `${year}-${month}-${day}`;
             document.getElementById('log-date').value = formattedDate;
             document.getElementById('start-time').value = d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
-            
-            // Set stats range to current month by default
             if (!document.getElementById('range-from').value) {
-                document.getElementById('range-from').value = `${year}-${month}-01`;
+                document.getElementById('range-from').value = formattedDate;
                 document.getElementById('range-to').value = formattedDate;
             }
         };
@@ -415,12 +410,9 @@
             const m = parseFloat(document.getElementById('dur-mins').value) || 0;
             const duration = h + (m/60);
 
-            if(!dateVal || !startTimeStr || duration <= 0) {
-                alert("Please fill in all fields correctly.");
-                return;
-            }
+            if(!dateVal || !startTimeStr || duration <= 0) return;
 
-            balance = Math.max(-100, Math.min(balance + (act.rate * duration), 200));
+            balance = Math.max(-60, Math.min(balance + (act.rate * duration), 140));
             
             history.push({ 
                 name: act.name, 
@@ -441,39 +433,21 @@
             const month = String(viewingDate.getMonth() + 1).padStart(2, '0');
             const day = String(viewingDate.getDate()).padStart(2, '0');
             const dateStr = `${year}-${month}-${day}`;
-
             document.getElementById('day-date-label').innerText = viewingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            
             const list = document.getElementById('timeline-list');
             list.innerHTML = '';
-            
-            let dayGrid = Array(24).fill(null).map(() => []);
-
+            let dayGrid = Array(24).fill(null);
             history.forEach((log, idx) => {
                 if (log.date === dateStr) {
                     const [h, m] = log.startTime.split(':').map(Number);
-                    dayGrid[h].push({ ...log, idx });
+                    const startDec = h + (m/60);
+                    const endDec = startDec + log.duration;
+                    for(let i=0; i<24; i++) if(startDec < (i + 1) && endDec > i) dayGrid[i] = { ...log, idx };
                 }
             });
-
             for(let i=0; i<24; i++) {
-                const logs = dayGrid[i];
-                let content = "";
-                if (logs.length > 0) {
-                    logs.forEach(log => {
-                        content += `<div class="h-block ${log.cat==='deposit'?'fill-deposit':'fill-withdraw'}" onclick="openEdit(${log.idx})">
-                            ${log.name} (${log.duration.toFixed(1)}h)
-                        </div>`;
-                    });
-                } else {
-                    content = `<div class="h-block"></div>`;
-                }
-
-                list.innerHTML += `
-                    <div class="hour-row">
-                        <div class="h-time">${i}:00</div>
-                        ${content}
-                    </div>`;
+                const log = dayGrid[i];
+                list.innerHTML += `<div class="hour-row"><div class="h-time">${i}:00</div><div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}" onclick="${log ? `openEdit(${log.idx})` : ''}">${log ? `${log.name} (${log.duration.toFixed(1)}h)` : ''}</div></div>`;
             }
         }
 
@@ -486,32 +460,26 @@
             document.getElementById('edit-date').value = log.date;
             document.getElementById('edit-modal').style.display = 'flex';
         }
-
         function closeModal() { document.getElementById('edit-modal').style.display = 'none'; editingLogIdx = null; }
-
         function confirmEdit() {
             const log = history[editingLogIdx];
             const h = parseFloat(document.getElementById('edit-hrs').value) || 0;
             const m = parseFloat(document.getElementById('edit-mins').value) || 0;
             const newDate = document.getElementById('edit-date').value;
             const newDuration = h + (m/60);
-
             if (newDuration > 0) {
-                balance = Math.max(-100, Math.min(balance - (log.rate * log.duration) + (log.rate * newDuration), 200));
+                balance = Math.max(-60, Math.min(balance - (log.rate * log.duration) + (log.rate * newDuration), 140));
                 history[editingLogIdx].duration = newDuration;
                 history[editingLogIdx].date = newDate;
-                saveAll(); 
-                closeModal();
+                saveAll(); closeModal();
             }
         }
-
         function confirmDelete() {
             if (confirm("Delete this activity log?")) {
                 const log = history[editingLogIdx];
-                balance = Math.max(-100, Math.min(balance - (log.rate * log.duration), 200));
+                balance = Math.max(-60, Math.min(balance - (log.rate * log.duration), 140));
                 history.splice(editingLogIdx, 1);
-                saveAll(); 
-                closeModal();
+                saveAll(); closeModal();
             }
         }
 
@@ -522,10 +490,7 @@
             refresh();
         }
 
-        function changeDay(offset) { 
-            viewingDate.setDate(viewingDate.getDate() + offset); 
-            updateDayView(); 
-        }
+        function changeDay(offset) { viewingDate.setDate(viewingDate.getDate() + offset); updateDayView(); }
 
         function renderReports() {
             const pie = document.getElementById('pie-chart');
@@ -534,10 +499,7 @@
             const from = document.getElementById('range-from').value;
             const to = document.getElementById('range-to').value;
 
-            if (!from || !to) return;
-
             let stats = {}; let total = 0; let buildTotal = 0; let drainTotal = 0;
-            
             history.forEach(s => {
                 if(s.date >= from && s.date <= to) {
                     stats[s.name] = (stats[s.name]||0)+s.duration; 
@@ -546,65 +508,53 @@
                 }
             });
 
-            if (total === 0) { 
-                pie.style.background = 'var(--empty)'; 
-                legend.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">No activities found for this range.</div>'; 
-                centerText.innerText = "Empty"; 
-                return; 
-            }
-
-            let sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]);
-            let current = 0; let g = []; legend.innerHTML = '';
+            if (total === 0) { pie.style.background = 'var(--empty)'; legend.innerHTML = ''; centerText.innerText = "Empty"; return; }
             
+            let sorted = Object.entries(stats).sort((a,b) => {
+                const catA = (history.find(h => h.name === a[0]) || {}).cat || 'deposit';
+                const catB = (history.find(h => h.name === b[0]) || {}).cat || 'deposit';
+                return catA === catB ? 0 : catA === 'deposit' ? -1 : 1;
+            });
+            
+            let current = 0; let g = []; legend.innerHTML = '';
             sorted.forEach(([name, dur]) => {
                 const item = history.find(h => h.name === name);
                 const color = item && item.cat === 'withdraw' ? 'var(--withdraw)' : 'var(--accent)';
                 const p = (dur/total)*100; g.push(`${color} ${current}% ${current+p}%`); current+=p;
-                legend.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--card-border); font-size:0.8rem;">
-                    <span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name}</span>
-                    <span style="font-weight:900;">${dur.toFixed(1)}h</span>
-                </div>`;
+                legend.innerHTML += `<div class="legend-item" style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--card-border); font-size:0.8rem;"><span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name} <span style="opacity:0.5; font-size:0.7rem;">(${Math.round(p)}%)</span></span><span style="font-weight:900;">${dur.toFixed(1)}h</span></div>`;
             });
             pie.style.background = `conic-gradient(${g.join(',')})`;
-            centerText.innerHTML = `<div style="color:var(--accent)">+${buildTotal.toFixed(1)}h</div><div style="color:var(--withdraw)">-${drainTotal.toFixed(1)}h</div>`;
+            centerText.innerHTML = `<div style="color:var(--accent)">BUILD: ${Math.round((buildTotal/total)*100)}%</div><div style="color:var(--withdraw)">DRAIN: ${Math.round((drainTotal/total)*100)}%</div><div style="margin-top:5px; opacity:0.6; font-size:0.6rem;">${total.toFixed(1)}h TOTAL</div>`;
         }
 
         function refresh() {
             document.getElementById('disp-bal').innerText = Math.round(balance);
             const fill = document.getElementById('fill-bar');
             const ins = document.getElementById('insight-display');
-            
-            const visualPerc = Math.max(0, Math.min(((balance + 50) / 150) * 100, 100));
+            const visualPerc = ((balance + 60) / 200) * 100;
             fill.style.width = visualPerc + "%";
-
             let label = ""; let desc = "";
-            if (balance >= 120) { fill.style.background = "var(--danger)"; label = "Redline"; desc = "Critical burnout risk. Rest now."; } 
-            else if (balance >= 80) { fill.style.background = "var(--overheat)"; label = "Peak"; desc = "High output maintained."; } 
-            else if (balance >= 40) { fill.style.background = "var(--deposit)"; label = "Optimal"; desc = "Perfect flow state."; } 
-            else if (balance >= 10) { fill.style.background = "var(--accent)"; label = "Steady"; desc = "Keep building momentum."; } 
-            else if (balance >= -10) { fill.style.background = "#475569"; label = "Neutral"; desc = "System idle."; } 
-            else { fill.style.background = "var(--withdraw)"; label = "Deficit"; desc = "Drain exceeds build."; }
-            
+            if (balance >= 140) { fill.style.background = "var(--danger)"; label = "Critical"; desc = "System overload. Cooldown required."; } 
+            else if (balance >= 115) { fill.style.background = "var(--danger)"; label = "Redlining"; desc = "Beyond sustainable capacity."; } 
+            else if (balance >= 95) { fill.style.background = "var(--overheat)"; label = "Maximum"; desc = "Peak output. Monitor for burnout."; } 
+            else if (balance >= 75) { fill.style.background = "var(--deposit)"; label = "Optimal"; desc = "Perfect flow. Keep this zone."; } 
+            else if (balance >= 55) { fill.style.background = "var(--accent)"; label = "Stable"; desc = "Good efficiency. Keep it up."; } 
+            else if (balance >= 35) { fill.style.background = "#64748b"; label = "Adequate"; desc = "Operational but losing momentum."; } 
+            else if (balance >= 1) { fill.style.background = "#475569"; label = "Slacking"; desc = "System stagnant. Build now."; } 
+            else if (balance === 0) { fill.style.background = "#1e293b"; label = "Void"; desc = "Zero momentum detected."; } 
+            else { fill.style.background = "var(--withdraw)"; label = "Debt"; desc = "Actively destroying potential."; }
             ins.innerHTML = `<span class="status-label" style="color:${fill.style.background}">${label}</span><span class="status-desc">${desc}</span>`;
-            
             document.getElementById('sel-act').innerHTML = activities.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
-            
-            const bList = document.getElementById('list-build'); 
-            const dList = document.getElementById('list-drain');
-            bList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 5px; display:block;">Build Activities</span>';
-            dList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:20px 0 10px 5px; display:block;">Drain Activities</span>';
-            
+            const bList = document.getElementById('list-build'); const dList = document.getElementById('list-drain');
+            bList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 5px; display:block; letter-spacing:1px;">Build Activities</span>';
+            dList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:20px 0 10px 5px; display:block; letter-spacing:1px;">Drain Activities</span>';
             activities.forEach((a, i) => {
-                const html = `<div class="card" onclick="openActEdit(${i})" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-radius:16px;">
-                    <div><b>${a.name}</b><br><small style="color:var(--text-dim)">${a.rate} pts/hr</small></div>
-                    <span style="color:var(--accent); font-size: 0.65rem; font-weight: 800;">EDIT</span>
-                </div>`;
+                const html = `<div class="card" onclick="openActEdit(${i})" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-radius:16px;"><div><b>${a.name}</b><br><small style="color:var(--text-dim)">${a.rate} pts/hr</small></div><span style="color:var(--accent); font-size: 0.65rem; font-weight: 800; text-transform:uppercase;">Edit</span></div>`;
                 if(a.cat === 'deposit') bList.innerHTML += html; else dList.innerHTML += html;
             });
             updateDayView();
         }
 
-        // Configuration Modal Logic
         function openActEdit(index) {
             editingActIdx = index;
             const act = activities[index];
