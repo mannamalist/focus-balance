@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Flow</title>
+    <style>
+        :root {
+            --bg: #05070a; --card: #11141d; --accent: #38bdf8;
+            --deposit: #10b981; --withdraw: #ef4444; --empty: #1e293b; 
+            --overheat: #a855f7; --text-dim: #94a3b8; --danger: #f59e0b;
+        }
+        body { background: var(--bg); color: #f8fafc; font-family: 'Inter', system-ui, sans-serif; margin: 0; padding-bottom: 100px; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 480px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+        
+        .nav-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: rgba(17, 20, 29, 0.85); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 12px; border: 1px solid #334155; border-radius: 25px; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .nav-item { color: var(--text-dim); cursor: pointer; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; transition: 0.3s; padding: 10px 15px; border-radius: 15px; }
+        .nav-item.active { color: var(--accent); background: rgba(56, 189, 248, 0.15); }
+        
+        .page { display: none; animation: slideUp 0.3s ease-out; } 
+        .page.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header-card { text-align: center; background: radial-gradient(circle at top right, #1e293b, #11141d); padding: 40px 20px; border-radius: 40px; margin-bottom: 25px; border: 1px solid #1e293b; }
+        .balance-val { font-size: 5rem; font-weight: 900; margin: 0; letter-spacing: -4px; line-height: 1; }
+        .progress-container { height: 12px; background: var(--empty); border-radius: 10px; margin: 30px 0; overflow: hidden; position: relative; }
+        #fill-bar { height: 100%; width: 50%; transition: 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+        .marker { position: absolute; top: 0; left: 30%; width: 2px; height: 100%; background: white; opacity: 0.4; } 
+
+        .insight-box { background: rgba(15, 23, 42, 0.6); padding: 18px; border-radius: 20px; font-size: 0.85rem; border-left: 4px solid var(--accent); min-height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; }
+        .status-label { font-weight: 900; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }
+        .status-desc { color: #f8fafc; opacity: 0.9; font-size: 0.8rem; }
+
+        .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #1e293b; margin-bottom: 25px; }
+        input, select, button { width: 100%; padding: 16px; margin: 10px 0; border-radius: 18px; border: none; background: #1c2331; color: white; font-size: 1rem; box-sizing: border-box; }
+        .btn-main { background: var(--accent); color: #000; font-weight: 900; cursor: pointer; border-bottom: 5px solid #0ea5e9; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: #f87171; font-weight: 800; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 20px; }
+
+        .date-shifter { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 15px 20px; border-radius: 25px; margin-bottom: 15px; border: 1px solid #1e293b; }
+        .shift-btn { background: #1c2331; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 900; border: 1px solid #334155; }
+
+        .timeline-box { background: var(--card); border-radius: 35px; padding: 20px; border: 1px solid #1e293b; }
+        .hour-row { display: flex; height: 45px; align-items: center; border-bottom: 1px solid #0f172a; }
+        .h-time { width: 55px; font-size: 0.65rem; color: var(--text-dim); font-weight: 800; }
+        .h-block { flex-grow: 1; height: 36px; border-radius: 12px; background: #05070a; display: flex; align-items: center; padding-left: 15px; font-size: 0.8rem; font-weight: 600; border: 1px solid #1e293b; }
+        .fill-deposit { background: rgba(16, 185, 129, 0.15); border-color: var(--deposit); color: var(--deposit); }
+        .fill-withdraw { background: rgba(239, 68, 68, 0.15); border-color: var(--withdraw); color: var(--withdraw); }
+
+        .pie-container { width: 220px; height: 220px; border-radius: 50%; margin: 30px auto; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.5); background: var(--empty); }
+        .pie-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; background: var(--card); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: white; text-align: center; font-weight: 900; line-height: 1.4; }
+        .legend-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; font-size: 0.85rem; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+
+        .cat-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); margin: 10px 0 10px 10px; display: block; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; }
+    </style>
+</head>
+<body ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)">
+
+    <div class="app-container">
+        <div id="page-dash" class="page active">
+            <div class="header-card">
+                <h3 style="margin:0; color:var(--text-dim); font-size: 0.75rem; letter-spacing: 2px;">FOCUS BALANCE</h3>
+                <div class="balance-val" id="disp-bal">0</div>
+                <div class="progress-container">
+                    <div id="fill-bar"></div>
+                    <div class="marker"></div>
+                </div>
+                <div id="insight-display" class="insight-box">
+                    <span class="status-label">Analyzing</span>
+                    <span class="status-desc">Calculating flow...</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin:0 0 15px 0;">Log Activity</h3>
+                <select id="sel-act"></select>
+                <div style="display:flex; justify-content:space-between; margin-top:15px; font-size: 0.85rem; font-weight: bold;">
+                    <span>Start: <span id="start-label" style="color:var(--accent)">09:00</span></span>
+                    <span>For: <span id="dur-label" style="color:var(--accent)">1h</span></span>
+                </div>
+                <input type="range" id="start-slider" min="0" max="23" value="9">
+                <input type="range" id="dur-slider" min="1" max="12" value="1">
+                <button class="btn-main" onclick="executeLog()">Commit to Flow</button>
+            </div>
+        </div>
+
+        <div id="page-day" class="page">
+            <div class="date-shifter">
+                <div class="shift-btn" onclick="changeDay(-1)">←</div>
+                <div id="day-date-label" style="font-weight:900; font-size: 0.95rem;"></div>
+                <div class="shift-btn" onclick="changeDay(1)">→</div>
+            </div>
+            <div class="timeline-box" id="timeline-list"></div>
+        </div>
+
+        <div id="page-reports" class="page">
+            <h2 style="margin-left:15px;">Analytics</h2>
+            <div class="card">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="date" id="range-from" style="margin:0; font-size:0.8rem;">
+                    <input type="date" id="range-to" style="margin:0; font-size:0.8rem;" onchange="renderReports()">
+                </div>
+                <div class="pie-container" id="pie-chart">
+                    <div class="pie-hole" id="pie-center-text">Data</div>
+                </div>
+                <div id="pie-legend"></div>
+            </div>
+        </div>
+
+        <div id="page-settings" class="page">
+            <h2 style="margin-left:15px;">Settings</h2>
+            <div class="card">
+                <input type="text" id="in-name" placeholder="Activity Name">
+                <input type="number" id="in-rate" placeholder="Points / Hour">
+                <select id="in-cat">
+                    <option value="deposit">Build</option>
+                    <option value="withdraw">Drain</option>
+                </select>
+                <button class="btn-main" onclick="saveNewAct()">Save Activity</button>
+            </div>
+            
+            <span class="cat-title">Build Activities</span>
+            <div class="card" id="list-build" style="padding:10px 25px;"></div>
+            
+            <span class="cat-title">Drain Activities</span>
+            <div class="card" id="list-drain" style="padding:10px 25px;"></div>
+
+            <button class="btn-danger" onclick="wipeAllData()">WIPE ALL HISTORY & BALANCE</button>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-item active" onclick="tab('dash', this)">Flow</div>
+        <div class="nav-item" onclick="tab('day', this)">Day View</div>
+        <div class="nav-item" onclick="tab('reports', this)">Reports</div>
+        <div class="nav-item" onclick="tab('settings', this)">Settings</div>
+    </nav>
+
+    <script>
+        let balance = parseFloat(localStorage.getItem('f_flow_balance')) || 0; 
+        let history = JSON.parse(localStorage.getItem('f_flow_history')) || [];
+        let activities = JSON.parse(localStorage.getItem('f_flow_final')) || [
+            { name: "Deep Work", rate: 30, cat: "deposit" },
+            { name: "Social Media", rate: -45, cat: "withdraw" }
+        ];
+        
+        let viewingDate = new Date();
+
+        function tab(p, el) {
+            document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(ni => ni.classList.remove('active'));
+            document.getElementById('page-'+p).classList.add('active');
+            el.classList.add('active');
+            if(p === 'reports') renderReports();
+            if(p === 'day') updateDayView();
+            if(p === 'settings') refresh();
+        }
+
+        function executeLog() {
+            const act = activities[document.getElementById('sel-act').value];
+            const start = parseInt(document.getElementById('start-slider').value);
+            const duration = parseInt(document.getElementById('dur-slider').value);
+            balance = Math.max(-60, Math.min(balance + (act.rate * duration), 140));
+            localStorage.setItem('f_flow_balance', balance);
+            // WE SAVE THE CATEGORY INSIDE THE HISTORY SO COLOR NEVER BREAKS
+            history.push({ name: act.name, duration: duration, startHour: start, date: new Date().toISOString().split('T')[0], cat: act.cat });
+            localStorage.setItem('f_flow_history', JSON.stringify(history));
+            refresh();
+        }
+
+        function updateDayView() {
+            const dateStr = viewingDate.toISOString().split('T')[0];
+            document.getElementById('day-date-label').innerText = viewingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const list = document.getElementById('timeline-list');
+            list.innerHTML = '';
+            let dayGrid = Array(24).fill(null);
+            history.filter(h => h.date === dateStr).forEach(log => {
+                for(let i=0; i < log.duration; i++) dayGrid[(log.startHour + i) % 24] = log;
+            });
+            for(let i=0; i<24; i++) {
+                const log = dayGrid[i];
+                list.innerHTML += `<div class="hour-row"><div class="h-time">${i}:00</div><div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}">${log?log.name:''}</div></div>`;
+            }
+        }
+
+        function changeDay(offset) { viewingDate.setDate(viewingDate.getDate() + offset); updateDayView(); }
+
+        let touchstartX = 0; let touchendX = 0;
+        function handleTouchStart(e) { touchstartX = e.changedTouches[0].screenX; }
+        function handleTouchEnd(e) { 
+            touchendX = e.changedTouches[0].screenX; 
+            if (document.getElementById('page-day').classList.contains('active')) {
+                if (touchendX < touchstartX - 80) changeDay(1);
+                if (touchendX > touchstartX + 80) changeDay(-1);
+            }
+        }
+
+        function renderReports() {
+            const pie = document.getElementById('pie-chart');
+            const legend = document.getElementById('pie-legend');
+            const centerText = document.getElementById('pie-center-text');
+            
+            let stats = {}; let total = 0;
+            let buildTotal = 0; let drainTotal = 0;
+
+            history.forEach(s => { 
+                stats[s.name] = (stats[s.name]||0)+s.duration; 
+                total += s.duration; 
+                if(s.cat === 'deposit') buildTotal += s.duration;
+                else drainTotal += s.duration;
+            });
+
+            if (total === 0) { pie.style.background = 'var(--empty)'; legend.innerHTML = ''; centerText.innerText = "Empty"; return; }
+            
+            // ORDER: All Build logs together, then all Drain logs together
+            let sorted = Object.entries(stats).sort((a,b) => {
+                const itemA = history.find(h => h.name === a[0]);
+                const itemB = history.find(h => h.name === b[0]);
+                const catA = itemA ? itemA.cat : 'deposit';
+                const catB = itemB ? itemB.cat : 'deposit';
+                return catA === catB ? 0 : catA === 'deposit' ? -1 : 1;
+            });
+
+            let current = 0; let g = []; legend.innerHTML = '';
+            sorted.forEach(([name, dur]) => {
+                // GET COLOR FROM HISTORY CAT, NOT FROM SETTINGS
+                const item = history.find(h => h.name === name);
+                const color = item && item.cat === 'withdraw' ? 'var(--withdraw)' : 'var(--accent)';
+                const p = (dur/total)*100;
+                g.push(`${color} ${current}% ${current+p}%`);
+                current+=p;
+                legend.innerHTML += `<div class="legend-item"><span><span class="legend-dot" style="background:${color}"></span>${name}</span><span style="font-weight:900;">${dur}h</span></div>`;
+            });
+
+            pie.style.background = `conic-gradient(${g.join(',')})`;
+            centerText.innerHTML = `
+                <div style="color:var(--accent)">BUILD: ${Math.round((buildTotal/total)*100)}%</div>
+                <div style="color:var(--withdraw)">DRAIN: ${Math.round((drainTotal/total)*100)}%</div>
+                <div style="margin-top:5px; opacity:0.6; font-size:0.6rem;">${total}h TOTAL</div>
+            `;
+        }
+
+        function refresh() {
+            localStorage.setItem('f_flow_final', JSON.stringify(activities));
+            document.getElementById('disp-bal').innerText = Math.round(balance);
+            const fill = document.getElementById('fill-bar');
+            const ins = document.getElementById('insight-display');
+            const visualPerc = ((balance + 60) / 200) * 100;
+            fill.style.width = visualPerc + "%";
+            
+            let label = ""; let desc = "";
+            if (balance >= 140) { fill.style.background = "var(--danger)"; label = "Critical"; desc = "System overload. Cooldown required."; } 
+            else if (balance >= 115) { fill.style.background = "var(--danger)"; label = "Redlining"; desc = "Beyond sustainable capacity."; } 
+            else if (balance >= 95) { fill.style.background = "var(--overheat)"; label = "Maximum"; desc = "Peak output. Monitor for burnout."; } 
+            else if (balance >= 75) { fill.style.background = "var(--deposit)"; label = "Optimal"; desc = "Perfect flow. Keep this zone."; } 
+            else if (balance >= 55) { fill.style.background = "var(--accent)"; label = "Stable"; desc = "Good efficiency. Keep it up."; } 
+            else if (balance >= 35) { fill.style.background = "#64748b"; label = "Adequate"; desc = "Operational but losing momentum."; } 
+            else if (balance >= 1) { fill.style.background = "#475569"; label = "Slacking"; desc = "System stagnant. Build now."; } 
+            else if (balance === 0) { fill.style.background = "#1e293b"; label = "Void"; desc = "Zero momentum detected."; } 
+            else { fill.style.background = "var(--withdraw)"; label = "Debt"; desc = "Actively destroying potential."; }
+            
+            ins.innerHTML = `<span class="status-label" style="color:${fill.style.background}">${label}</span><span class="status-desc">${desc}</span>`;
+            document.getElementById('sel-act').innerHTML = activities.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
+            
+            const buildList = document.getElementById('list-build');
+            const drainList = document.getElementById('list-drain');
+            buildList.innerHTML = ''; drainList.innerHTML = '';
+            activities.forEach((a, i) => {
+                const html = `<div class="item-row"><div><b>${a.name}</b><br><small style="color:var(--text-dim)">${a.rate} pts/hr</small></div><span style="color:#f87171; font-weight:800; cursor:pointer; font-size:0.75rem;" onclick="deleteAct(${i})">REMOVE</span></div>`;
+                if(a.cat === 'deposit') buildList.innerHTML += html;
+                else drainList.innerHTML += html;
+            });
+            updateDayView();
+        }
+
+        function saveNewAct() {
+            const n = document.getElementById('in-name').value;
+            const r = parseFloat(document.getElementById('in-rate').value);
+            const c = document.getElementById('in-cat').value;
+            if(n && !isNaN(r)) { activities.push({ name: n, rate: r, cat: c }); refresh(); document.getElementById('in-name').value = ''; document.getElementById('in-rate').value = ''; }
+        }
+
+        function deleteAct(i) {
+            if(confirm(`Are you sure you want to remove "${activities[i].name}"? This will not change your past balance but will remove it from future logs.`)) { activities.splice(i, 1); refresh(); }
+        }
+
+        function wipeAllData() {
+            if(confirm("DANGER: This will permanently delete all your logged hours and reset your balance to 0. Proceed?")) {
+                balance = 0; history = [];
+                localStorage.setItem('f_flow_balance', 0);
+                localStorage.setItem('f_flow_history', JSON.stringify([]));
+                refresh();
+            }
+        }
+
+        document.getElementById('start-slider').oninput = e => document.getElementById('start-label').innerText = e.target.value.padStart(2, '0') + ":00";
+        document.getElementById('dur-slider').oninput = e => document.getElementById('dur-label').innerText = e.target.value + "h";
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('range-from').value = todayStr;
+        document.getElementById('range-to').value = todayStr;
+        refresh();
+    </script>
+</body>
+</html>
