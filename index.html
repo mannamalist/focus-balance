@@ -47,7 +47,7 @@
 
         .pie-container { width: 220px; height: 220px; border-radius: 50%; margin: 30px auto; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.5); background: var(--empty); }
         .pie-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; background: var(--card); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: white; text-align: center; font-weight: 900; line-height: 1.4; }
-        .legend-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; font-size: 0.85rem; }
+        .legend-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; font-size: 0.8rem; }
         
         .input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
         label { font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; display: block; margin-bottom: 4px; padding-left: 4px; }
@@ -60,9 +60,7 @@
             <div class="header-card">
                 <h3 style="margin:0; color:var(--text-dim); font-size: 0.75rem; letter-spacing: 2px;">FOCUS BALANCE</h3>
                 <div class="balance-val" id="disp-bal">0</div>
-                <div class="progress-container">
-                    <div id="fill-bar"></div>
-                </div>
+                <div class="progress-container"><div id="fill-bar"></div></div>
                 <div id="insight-display" class="insight-box">
                     <span class="status-label">Analyzing</span>
                     <span class="status-desc">Calculating flow...</span>
@@ -72,11 +70,10 @@
             <div class="card">
                 <h3 style="margin:0 0 15px 0;">Log Activity</h3>
                 <select id="sel-act"></select>
-                
                 <div class="input-grid">
                     <div><label>Start</label><input type="time" id="start-time"></div>
-                    <div><label>Hrs</label><input type="number" id="dur-hrs" value="1" min="0"></div>
                     <div><label>Mins</label><input type="number" id="dur-mins" value="0" min="0" max="59" step="15"></div>
+                    <div><label>Hrs</label><input type="number" id="dur-hrs" value="1" min="0"></div>
                 </div>
                 <button class="btn-main" onclick="executeLog()">Commit to Flow</button>
             </div>
@@ -120,16 +117,18 @@
     <nav class="nav-bar">
         <div class="nav-item active" onclick="tab('dash', this)">Flow</div>
         <div class="nav-item" onclick="tab('day', this)">Day View</div>
-        <div class="nav-item" onclick="tab('reports', this)">Reports</div>
+        <div class="nav-item" onclick="reportsTab(this)">Reports</div>
         <div class="nav-item" onclick="tab('settings', this)">Settings</div>
     </nav>
 
     <script>
         let balance = parseFloat(localStorage.getItem('f_flow_balance')) || 0; 
         let history = JSON.parse(localStorage.getItem('f_flow_history')) || [];
+        
+        // Sample Activities updated as requested
         let activities = JSON.parse(localStorage.getItem('f_flow_final')) || [
             { name: "Deep Work", rate: 20, cat: "deposit" },
-            { name: "Social Media", rate: -15, cat: "withdraw" }
+            { name: "Social Media", rate: -20, cat: "withdraw" }
         ];
         
         let viewingDate = new Date();
@@ -144,9 +143,13 @@
             document.querySelectorAll('.nav-item').forEach(ni => ni.classList.remove('active'));
             document.getElementById('page-'+p).classList.add('active');
             el.classList.add('active');
-            if(p === 'reports') renderReports();
             if(p === 'day') updateDayView();
             if(p === 'settings') refresh();
+        }
+        
+        function reportsTab(el) {
+            tab('reports', el);
+            renderReports();
         }
 
         function executeLog() {
@@ -155,19 +158,10 @@
             const h = parseFloat(document.getElementById('dur-hrs').value) || 0;
             const m = parseFloat(document.getElementById('dur-mins').value) || 0;
             const duration = h + (m/60);
-            
             if(!startTimeStr || duration <= 0) return;
-
             balance = Math.max(-60, Math.min(balance + (act.rate * duration), 140));
             localStorage.setItem('f_flow_balance', balance);
-
-            history.push({ 
-                name: act.name, 
-                duration: duration, 
-                startTime: startTimeStr, 
-                date: new Date().toISOString().split('T')[0], 
-                cat: act.cat 
-            });
+            history.push({ name: act.name, duration: duration, startTime: startTimeStr, date: new Date().toISOString().split('T')[0], cat: act.cat });
             localStorage.setItem('f_flow_history', JSON.stringify(history));
             refresh();
             tab('day', document.querySelectorAll('.nav-item')[1]);
@@ -178,34 +172,16 @@
             document.getElementById('day-date-label').innerText = viewingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const list = document.getElementById('timeline-list');
             list.innerHTML = '';
-            
             let dayGrid = Array(24).fill(null);
-            
-            // Filter logs for selected day
-            const logsForDay = history.filter(h => h.date === dateStr);
-            
-            logsForDay.forEach(log => {
+            history.filter(h => h.date === dateStr).forEach(log => {
                 const [h, m] = log.startTime.split(':').map(Number);
                 const startDec = h + (m/60);
                 const endDec = startDec + log.duration;
-
-                for(let i=0; i<24; i++) {
-                    // Check if the activity overlaps with this hour block
-                    if(startDec < (i + 1) && endDec > i) {
-                        dayGrid[i] = log;
-                    }
-                }
+                for(let i=0; i<24; i++) if(startDec < (i + 1) && endDec > i) dayGrid[i] = log;
             });
-
             for(let i=0; i<24; i++) {
                 const log = dayGrid[i];
-                list.innerHTML += `
-                    <div class="hour-row">
-                        <div class="h-time">${i}:00</div>
-                        <div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}">
-                            ${log ? `${log.name} (${log.startTime})` : ''}
-                        </div>
-                    </div>`;
+                list.innerHTML += `<div class="hour-row"><div class="h-time">${i}:00</div><div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}">${log ? log.name : ''}</div></div>`;
             }
         }
 
@@ -216,7 +192,7 @@
             const legend = document.getElementById('pie-legend');
             const centerText = document.getElementById('pie-center-text');
             let stats = {}; let total = 0; let buildTotal = 0; let drainTotal = 0;
-
+            
             history.forEach(s => { 
                 stats[s.name] = (stats[s.name]||0)+s.duration; 
                 total += s.duration; 
@@ -238,15 +214,11 @@
                 const p = (dur/total)*100;
                 g.push(`${color} ${current}% ${current+p}%`);
                 current+=p;
-                legend.innerHTML += `<div class="legend-item"><span><span style="width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name}</span><span style="font-weight:900;">${dur.toFixed(1)}h</span></div>`;
+                legend.innerHTML += `<div class="legend-item"><span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name} <span style="opacity:0.5; font-size:0.7rem;">(${Math.round(p)}%)</span></span><span style="font-weight:900;">${dur.toFixed(1)}h</span></div>`;
             });
 
             pie.style.background = `conic-gradient(${g.join(',')})`;
-            centerText.innerHTML = `
-                <div style="color:var(--accent)">BUILD: ${Math.round((buildTotal/total)*100)}%</div>
-                <div style="color:var(--withdraw)">DRAIN: ${Math.round((drainTotal/total)*100)}%</div>
-                <div style="margin-top:5px; opacity:0.6; font-size:0.6rem;">${total.toFixed(1)}h TOTAL</div>
-            `;
+            centerText.innerHTML = `<div style="color:var(--accent)">BUILD: ${Math.round((buildTotal/total)*100)}%</div><div style="color:var(--withdraw)">DRAIN: ${Math.round((drainTotal/total)*100)}%</div><div style="margin-top:5px; opacity:0.6; font-size:0.6rem;">${total.toFixed(1)}h TOTAL</div>`;
         }
 
         function refresh() {
@@ -256,7 +228,6 @@
             const ins = document.getElementById('insight-display');
             const visualPerc = ((balance + 60) / 200) * 100;
             fill.style.width = visualPerc + "%";
-            
             let label = ""; let desc = "";
             if (balance >= 140) { fill.style.background = "var(--danger)"; label = "Critical"; desc = "System overload. Cooldown required."; } 
             else if (balance >= 115) { fill.style.background = "var(--danger)"; label = "Redlining"; desc = "Beyond sustainable capacity."; } 
@@ -267,12 +238,11 @@
             else if (balance >= 1) { fill.style.background = "#475569"; label = "Slacking"; desc = "System stagnant. Build now."; } 
             else if (balance === 0) { fill.style.background = "#1e293b"; label = "Void"; desc = "Zero momentum detected."; } 
             else { fill.style.background = "var(--withdraw)"; label = "Debt"; desc = "Actively destroying potential."; }
-            
             ins.innerHTML = `<span class="status-label" style="color:${fill.style.background}">${label}</span><span class="status-desc">${desc}</span>`;
             document.getElementById('sel-act').innerHTML = activities.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
-            
             const bList = document.getElementById('list-build'); const dList = document.getElementById('list-drain');
-            bList.innerHTML = '<span class="cat-title">Build Activities</span>'; dList.innerHTML = '<span class="cat-title">Drain Activities</span>';
+            bList.innerHTML = '<span style="font-size:0.7rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 10px; display:block;">Build Activities</span>';
+            dList.innerHTML = '<span style="font-size:0.7rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 10px; display:block;">Drain Activities</span>';
             activities.forEach((a, i) => {
                 const html = `<div class="card" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;"><div><b>${a.name}</b><br><small>${a.rate} pts/hr</small></div><span style="color:#f87171; font-weight:800; cursor:pointer;" onclick="deleteAct(${i})">REMOVE</span></div>`;
                 if(a.cat === 'deposit') bList.innerHTML += html; else dList.innerHTML += html;
@@ -281,16 +251,11 @@
         }
 
         function saveNewAct() {
-            const n = document.getElementById('in-name').value;
-            const r = parseFloat(document.getElementById('in-rate').value);
-            const c = document.getElementById('in-cat').value;
+            const n = document.getElementById('in-name').value; const r = parseFloat(document.getElementById('in-rate').value); const c = document.getElementById('in-cat').value;
             if(n && !isNaN(r)) { activities.push({ name: n, rate: r, cat: c }); refresh(); document.getElementById('in-name').value = ''; document.getElementById('in-rate').value = ''; }
         }
-
         function deleteAct(i) { if(confirm(`Remove "${activities[i].name}"?`)) { activities.splice(i, 1); refresh(); } }
-
-        function wipeAllData() { if(confirm("Wipe everything?")) { balance = 0; history = []; localStorage.clear(); location.reload(); } }
-
+        function wipeAllData() { if(confirm("Wipe everything?")) { localStorage.clear(); location.reload(); } }
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('range-from').value = todayStr;
         document.getElementById('range-to').value = todayStr;
