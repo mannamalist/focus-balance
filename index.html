@@ -6,59 +6,265 @@
     <title>Focus Flow</title>
     <style>
         :root {
-            --bg: #05070a; --card: #11141d; --accent: #38bdf8;
-            --deposit: #10b981; --withdraw: #ef4444; --empty: #1e293b; 
-            --overheat: #a855f7; --text-dim: #94a3b8; --danger: #f59e0b;
+            /* High-end Obsidian Palette */
+            --bg: #020408; 
+            --card: #0d1117; 
+            --card-border: #21262d;
+            --accent: #00d2ff; /* Electric Blue */
+            --accent-glow: rgba(0, 210, 255, 0.3);
+            --deposit: #2ecc71; 
+            --withdraw: #ff4757; 
+            --empty: #161b22; 
+            --overheat: #bf5af2; 
+            --text-main: #f0f6fc;
+            --text-dim: #8b949e;
+            --danger: #e67e22;
+            --glass: rgba(13, 17, 23, 0.8);
         }
-        body { background: var(--bg); color: #f8fafc; font-family: 'Inter', system-ui, sans-serif; margin: 0; padding-bottom: 100px; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 480px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+
+        body { 
+            background: var(--bg); 
+            color: var(--text-main); 
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; 
+            margin: 0; 
+            padding-bottom: 110px; 
+            overflow-x: hidden; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-container { width: 100%; max-width: 440px; margin: 0 auto; padding: 24px; box-sizing: border-box; }
         
-        .nav-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: rgba(17, 20, 29, 0.85); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 12px; border: 1px solid #334155; border-radius: 25px; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .nav-item { color: var(--text-dim); cursor: pointer; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; transition: 0.3s; padding: 10px 15px; border-radius: 15px; }
-        .nav-item.active { color: var(--accent); background: rgba(56, 189, 248, 0.15); }
+        /* Glassmorphic Navigation */
+        .nav-bar { 
+            position: fixed; 
+            bottom: 24px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 90%; 
+            max-width: 400px; 
+            background: var(--glass); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            display: flex; 
+            justify-content: space-around; 
+            padding: 8px; 
+            border: 1px solid var(--card-border); 
+            border-radius: 30px; 
+            z-index: 1000; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        }
         
-        .page { display: none; animation: slideUp 0.3s ease-out; } 
+        .nav-item { 
+            color: var(--text-dim); 
+            cursor: pointer; 
+            font-size: 0.65rem; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            padding: 12px 18px; 
+            border-radius: 22px; 
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-item.active { 
+            color: var(--text-main); 
+            background: rgba(255, 255, 255, 0.08); 
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        .page { display: none; animation: fadeIn 0.4s ease; } 
         .page.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .header-card { text-align: center; background: radial-gradient(circle at top right, #1e293b, #11141d); padding: 40px 20px; border-radius: 40px; margin-bottom: 25px; border: 1px solid #1e293b; }
-        .balance-val { font-size: 5rem; font-weight: 900; margin: 0; letter-spacing: -4px; line-height: 1; }
-        .progress-container { height: 12px; background: var(--empty); border-radius: 10px; margin: 30px 0; overflow: hidden; position: relative; }
-        #fill-bar { height: 100%; width: 50%; transition: 1.2s cubic-bezier(0.19, 1, 0.22, 1); border-radius: 10px; }
+        /* Dashboard Header */
+        .header-card { 
+            text-align: center; 
+            background: linear-gradient(145deg, #0d1117, #161b22);
+            padding: 50px 20px; 
+            border-radius: 44px; 
+            margin-bottom: 30px; 
+            border: 1px solid var(--card-border); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
 
-        .insight-box { background: rgba(15, 23, 42, 0.6); padding: 18px; border-radius: 20px; font-size: 0.85rem; border-left: 4px solid var(--accent); min-height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; }
-        .status-label { font-weight: 900; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }
-        .status-desc { color: #f8fafc; opacity: 0.8; font-size: 0.8rem; margin-top: 2px; }
+        .balance-val { 
+            font-size: 5.5rem; 
+            font-weight: 800; 
+            margin: 10px 0; 
+            letter-spacing: -5px; 
+            background: linear-gradient(to bottom, #fff, #8b949e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-        .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #1e293b; margin-bottom: 25px; }
-        input, select, button { width: 100%; padding: 16px; margin: 10px 0; border-radius: 18px; border: none; background: #1c2331; color: white; font-size: 1rem; box-sizing: border-box; }
-        .btn-main { background: var(--accent); color: #000; font-weight: 900; cursor: pointer; border-bottom: 5px solid #0ea5e9; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: #f87171; font-weight: 800; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 20px; }
+        .progress-container { 
+            height: 8px; 
+            background: var(--empty); 
+            border-radius: 10px; 
+            margin: 25px auto; 
+            width: 80%;
+            overflow: hidden; 
+            position: relative; 
+            border: 1px solid rgba(255,255,255,0.03);
+        }
 
-        .date-shifter { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 15px 20px; border-radius: 25px; margin-bottom: 15px; border: 1px solid #1e293b; }
-        .shift-btn { background: #1c2331; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 900; border: 1px solid #334155; }
+        #fill-bar { 
+            height: 100%; 
+            transition: 1.5s cubic-bezier(0.22, 1, 0.36, 1); 
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
 
-        .timeline-box { background: var(--card); border-radius: 35px; padding: 10px; border: 1px solid #1e293b; }
-        .hour-row { display: flex; height: 45px; align-items: center; border-bottom: 1px solid #0f172a; }
-        .h-time { width: 55px; font-size: 0.65rem; color: var(--text-dim); font-weight: 800; padding-left: 10px; }
-        .h-block { flex-grow: 1; height: 34px; border-radius: 10px; background: #05070a; display: flex; align-items: center; padding-left: 12px; font-size: 0.7rem; font-weight: 600; border: 1px solid #1e293b; overflow: hidden; white-space: nowrap; margin-right: 5px; }
-        .fill-deposit { background: rgba(16, 185, 129, 0.15); border-color: var(--deposit); color: var(--deposit); }
-        .fill-withdraw { background: rgba(239, 68, 68, 0.15); border-color: var(--withdraw); color: var(--withdraw); }
-
-        .pie-container { width: 220px; height: 220px; border-radius: 50%; margin: 30px auto; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.5); background: var(--empty); }
-        .pie-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; background: var(--card); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: white; text-align: center; font-weight: 900; line-height: 1.4; }
-        .legend-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; font-size: 0.8rem; }
+        .insight-box { 
+            background: rgba(255, 255, 255, 0.03); 
+            padding: 16px; 
+            border-radius: 24px; 
+            margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
         
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
-        label { font-size: 0.65rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; display: block; margin-bottom: 4px; padding-left: 4px; }
+        .status-label { font-weight: 800; text-transform: uppercase; letter-spacing: 2px; font-size: 0.7rem; display: block; margin-bottom: 4px; }
+        .status-desc { color: var(--text-dim); font-size: 0.85rem; }
+
+        /* Cards & Inputs */
+        .card { 
+            background: var(--card); 
+            padding: 24px; 
+            border-radius: 32px; 
+            border: 1px solid var(--card-border); 
+            margin-bottom: 24px; 
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 8px 0; 
+            border-radius: 14px; 
+            border: 1px solid var(--card-border); 
+            background: #161b22; 
+            color: white; 
+            font-size: 0.95rem; 
+            box-sizing: border-box; 
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        .btn-main { 
+            background: var(--text-main); 
+            color: #000; 
+            font-weight: 700; 
+            cursor: pointer; 
+            border: none;
+            border-radius: 14px;
+            padding: 18px;
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .btn-main:active { transform: scale(0.98); }
+
+        .btn-danger { 
+            background: transparent; 
+            color: var(--withdraw); 
+            font-weight: 600; 
+            border: 1px solid rgba(255, 71, 87, 0.2); 
+            margin-top: 30px; 
+            cursor: pointer; 
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        /* Timeline View */
+        .date-shifter { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 20px; 
+        }
+        
+        .shift-btn { 
+            background: var(--card); 
+            width: 38px; 
+            height: 38px; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border: 1px solid var(--card-border); 
+        }
+
+        .timeline-box { background: var(--card); border-radius: 32px; padding: 12px; border: 1px solid var(--card-border); }
+        .hour-row { display: flex; height: 50px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .h-time { width: 60px; font-size: 0.65rem; color: var(--text-dim); font-weight: 600; }
+        .h-block { 
+            flex-grow: 1; 
+            height: 38px; 
+            border-radius: 12px; 
+            background: rgba(255,255,255,0.02); 
+            display: flex; 
+            align-items: center; 
+            padding-left: 14px; 
+            font-size: 0.75rem; 
+            font-weight: 500; 
+            border: 1px solid transparent; 
+            margin-right: 4px;
+        }
+        .fill-deposit { background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.3); color: var(--deposit); }
+        .fill-withdraw { background: rgba(255, 71, 87, 0.1); border-color: rgba(255, 71, 87, 0.3); color: var(--withdraw); }
+
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 2000; display: none; align-items: flex-end; }
+        .modal-content { background: #0d1117; width: 100%; border-radius: 32px 32px 0 0; padding: 32px; border-top: 1px solid var(--card-border); }
+        
+        /* Reports Pie */
+        .pie-container { width: 200px; height: 200px; border-radius: 50%; margin: 40px auto; position: relative; border: 4px solid var(--card-border); }
+        .pie-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; background: var(--bg); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; text-align: center; }
+        
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+        label { font-size: 0.65rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 1px; }
+
+        h2, h3 { letter-spacing: -0.5px; }
     </style>
 </head>
 <body>
 
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modal-header" class="modal-title" style="font-weight: 900; margin-bottom: 20px;">Edit Activity</div>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex:1"><label>Hours</label><input type="number" id="edit-hrs" step="0.5" min="0"></div>
+                <div style="flex:1"><label>Mins</label><input type="number" id="edit-mins" step="5" min="0" max="55"></div>
+            </div>
+            <button class="btn-main" onclick="confirmEdit()">Save Changes</button>
+            <button class="btn-danger" style="width:100%;" onclick="confirmDelete()">Delete Entry</button>
+            <button style="background:transparent; border:none; color:var(--text-dim); width:100%; margin-top:15px; cursor:pointer;" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <div id="act-edit-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title" style="font-weight: 900; margin-bottom: 20px;">Edit Configuration</div>
+            <label>Name</label><input type="text" id="act-edit-name">
+            <label>Points / Hour</label><input type="number" id="act-edit-rate">
+            <label>Type</label>
+            <select id="act-edit-cat">
+                <option value="deposit">Build</option>
+                <option value="withdraw">Drain</option>
+            </select>
+            <button class="btn-main" onclick="confirmActEdit()">Save Changes</button>
+            <button class="btn-danger" style="width:100%;" onclick="confirmActDelete()">Delete Activity</button>
+            <button style="background:transparent; border:none; color:var(--text-dim); width:100%; margin-top:15px; cursor:pointer;" onclick="closeActModal()">Close</button>
+        </div>
+    </div>
+
     <div class="app-container">
         <div id="page-dash" class="page active">
             <div class="header-card">
-                <h3 style="margin:0; color:var(--text-dim); font-size: 0.75rem; letter-spacing: 2px;">FOCUS BALANCE</h3>
+                <h3 style="margin:0; color:var(--text-dim); font-size: 0.65rem; letter-spacing: 3px; font-weight: 900;">FLOW BALANCE</h3>
                 <div class="balance-val" id="disp-bal">0</div>
                 <div class="progress-container"><div id="fill-bar"></div></div>
                 <div id="insight-display" class="insight-box">
@@ -68,32 +274,33 @@
             </div>
 
             <div class="card">
-                <h3 style="margin:0 0 15px 0;">Log Activity</h3>
+                <h3 style="margin:0 0 15px 0; font-size: 1rem;">Log Activity</h3>
+                <label>Type</label>
                 <select id="sel-act"></select>
                 <div class="input-grid">
                     <div><label>Start</label><input type="time" id="start-time"></div>
                     <div><label>Mins</label><input type="number" id="dur-mins" value="0" min="0" max="59" step="15"></div>
                     <div><label>Hrs</label><input type="number" id="dur-hrs" value="1" min="0"></div>
                 </div>
-                <button class="btn-main" onclick="executeLog()">Commit to Flow</button>
+                <button class="btn-main" style="width:100%;" onclick="executeLog()">Commit to Flow</button>
             </div>
         </div>
 
         <div id="page-day" class="page">
             <div class="date-shifter">
                 <div class="shift-btn" onclick="changeDay(-1)">←</div>
-                <div id="day-date-label" style="font-weight:900; font-size: 0.95rem;"></div>
+                <div id="day-date-label" style="font-weight:800; font-size: 1rem;"></div>
                 <div class="shift-btn" onclick="changeDay(1)">→</div>
             </div>
             <div class="timeline-box" id="timeline-list"></div>
         </div>
 
         <div id="page-reports" class="page">
-            <h2 style="margin-left:15px;">Analytics</h2>
+            <h2 style="margin: 0 0 20px 5px;">Analytics</h2>
             <div class="card">
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <input type="date" id="range-from" style="margin:0; font-size:0.8rem;">
-                    <input type="date" id="range-to" style="margin:0; font-size:0.8rem;" onchange="renderReports()">
+                    <input type="date" id="range-from" style="margin:0;">
+                    <input type="date" id="range-to" style="margin:0;" onchange="renderReports()">
                 </div>
                 <div class="pie-container" id="pie-chart"><div class="pie-hole" id="pie-center-text">Data</div></div>
                 <div id="pie-legend"></div>
@@ -101,37 +308,40 @@
         </div>
 
         <div id="page-settings" class="page">
-            <h2 style="margin-left:15px;">Settings</h2>
+            <h2 style="margin: 0 0 20px 5px;">Settings</h2>
             <div class="card">
+                <h3 style="margin-top:0; font-size: 0.9rem;">New Activity</h3>
                 <input type="text" id="in-name" placeholder="Activity Name">
                 <input type="number" id="in-rate" placeholder="Points / Hour">
                 <select id="in-cat"><option value="deposit">Build</option><option value="withdraw">Drain</option></select>
-                <button class="btn-main" onclick="saveNewAct()">Save Activity</button>
+                <button class="btn-main" style="width:100%;" onclick="saveNewAct()">Save Activity</button>
             </div>
+            <div style="text-align: center; color: var(--text-dim); font-size: 0.6rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Tap an activity to edit</div>
             <div id="list-build"></div>
             <div id="list-drain"></div>
-            <button class="btn-danger" onclick="wipeAllData()">WIPE ALL HISTORY</button>
+            <button class="btn-danger" style="width:100%;" onclick="wipeAllData()">WIPE HISTORY & BALANCE</button>
         </div>
     </div>
 
     <nav class="nav-bar">
         <div class="nav-item active" onclick="tab('dash', this)">Flow</div>
-        <div class="nav-item" onclick="tab('day', this)">Day View</div>
-        <div class="nav-item" onclick="reportsTab(this)">Reports</div>
+        <div class="nav-item" onclick="tab('day', this)">Day</div>
+        <div class="nav-item" onclick="reportsTab(this)">Stats</div>
         <div class="nav-item" onclick="tab('settings', this)">Settings</div>
     </nav>
 
     <script>
         let balance = parseFloat(localStorage.getItem('f_flow_balance')) || 0; 
         let history = JSON.parse(localStorage.getItem('f_flow_history')) || [];
-        
-        // Sample Activities updated as requested
         let activities = JSON.parse(localStorage.getItem('f_flow_final')) || [
             { name: "Deep Work", rate: 20, cat: "deposit" },
             { name: "Social Media", rate: -20, cat: "withdraw" }
         ];
         
         let viewingDate = new Date();
+        let editingLogIdx = null;
+        let editingActIdx = null;
+
         const setNow = () => {
             const d = new Date();
             document.getElementById('start-time').value = d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
@@ -147,10 +357,7 @@
             if(p === 'settings') refresh();
         }
         
-        function reportsTab(el) {
-            tab('reports', el);
-            renderReports();
-        }
+        function reportsTab(el) { tab('reports', el); renderReports(); }
 
         function executeLog() {
             const act = activities[document.getElementById('sel-act').value];
@@ -160,11 +367,8 @@
             const duration = h + (m/60);
             if(!startTimeStr || duration <= 0) return;
             balance = Math.max(-60, Math.min(balance + (act.rate * duration), 140));
-            localStorage.setItem('f_flow_balance', balance);
-            history.push({ name: act.name, duration: duration, startTime: startTimeStr, date: new Date().toISOString().split('T')[0], cat: act.cat });
-            localStorage.setItem('f_flow_history', JSON.stringify(history));
-            refresh();
-            tab('day', document.querySelectorAll('.nav-item')[1]);
+            history.push({ name: act.name, duration: duration, startTime: startTimeStr, date: new Date().toISOString().split('T')[0], cat: act.cat, rate: act.rate });
+            saveAll(); tab('day', document.querySelectorAll('.nav-item')[1]);
         }
 
         function updateDayView() {
@@ -173,16 +377,78 @@
             const list = document.getElementById('timeline-list');
             list.innerHTML = '';
             let dayGrid = Array(24).fill(null);
-            history.filter(h => h.date === dateStr).forEach(log => {
-                const [h, m] = log.startTime.split(':').map(Number);
-                const startDec = h + (m/60);
-                const endDec = startDec + log.duration;
-                for(let i=0; i<24; i++) if(startDec < (i + 1) && endDec > i) dayGrid[i] = log;
+            history.forEach((log, idx) => {
+                if (log.date === dateStr) {
+                    const [h, m] = log.startTime.split(':').map(Number);
+                    const startDec = h + (m/60);
+                    const endDec = startDec + log.duration;
+                    for(let i=0; i<24; i++) if(startDec < (i + 1) && endDec > i) dayGrid[i] = { ...log, idx };
+                }
             });
             for(let i=0; i<24; i++) {
                 const log = dayGrid[i];
-                list.innerHTML += `<div class="hour-row"><div class="h-time">${i}:00</div><div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}">${log ? log.name : ''}</div></div>`;
+                list.innerHTML += `<div class="hour-row"><div class="h-time">${i}:00</div><div class="h-block ${log? (log.cat==='deposit'?'fill-deposit':'fill-withdraw'):''}" onclick="${log ? `openEdit(${log.idx})` : ''}">${log ? `${log.name} (${log.duration.toFixed(1)}h)` : ''}</div></div>`;
             }
+        }
+
+        function openEdit(index) {
+            editingLogIdx = index;
+            const log = history[index];
+            document.getElementById('modal-header').innerText = `Edit: ${log.name}`;
+            document.getElementById('edit-hrs').value = Math.floor(log.duration);
+            document.getElementById('edit-mins').value = Math.round((log.duration % 1) * 60);
+            document.getElementById('edit-modal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('edit-modal').style.display = 'none'; editingLogIdx = null; }
+        function confirmEdit() {
+            const log = history[editingLogIdx];
+            const h = parseFloat(document.getElementById('edit-hrs').value) || 0;
+            const m = parseFloat(document.getElementById('edit-mins').value) || 0;
+            const newDuration = h + (m/60);
+            if (newDuration > 0) {
+                balance = Math.max(-60, Math.min(balance - (log.rate * log.duration) + (log.rate * newDuration), 140));
+                history[editingLogIdx].duration = newDuration;
+                saveAll(); closeModal();
+            }
+        }
+        function confirmDelete() {
+            if (confirm("Delete this activity log?")) {
+                const log = history[editingLogIdx];
+                balance = Math.max(-60, Math.min(balance - (log.rate * log.duration), 140));
+                history.splice(editingLogIdx, 1);
+                saveAll(); closeModal();
+            }
+        }
+
+        function openActEdit(index) {
+            editingActIdx = index;
+            const act = activities[index];
+            document.getElementById('act-edit-name').value = act.name;
+            document.getElementById('act-edit-rate').value = act.rate;
+            document.getElementById('act-edit-cat').value = act.cat;
+            document.getElementById('act-edit-modal').style.display = 'flex';
+        }
+        function closeActModal() { document.getElementById('act-edit-modal').style.display = 'none'; editingActIdx = null; }
+        function confirmActEdit() {
+            const n = document.getElementById('act-edit-name').value;
+            const r = parseFloat(document.getElementById('act-edit-rate').value);
+            const c = document.getElementById('act-edit-cat').value;
+            if(n && !isNaN(r)) { activities[editingActIdx] = { name: n, rate: r, cat: c }; saveAll(); closeActModal(); }
+        }
+        function confirmActDelete() {
+            if(confirm(`Completely remove "${activities[editingActIdx].name}" from settings?`)) { activities.splice(editingActIdx, 1); saveAll(); closeActModal(); }
+        }
+
+        function saveNewAct() {
+            const n = document.getElementById('in-name').value; const r = parseFloat(document.getElementById('in-rate').value); const c = document.getElementById('in-cat').value;
+            if(n && !isNaN(r)) { activities.push({ name: n, rate: r, cat: c }); document.getElementById('in-name').value = ''; document.getElementById('in-rate').value = ''; saveAll(); }
+        }
+
+        function saveAll() {
+            localStorage.setItem('f_flow_history', JSON.stringify(history));
+            localStorage.setItem('f_flow_balance', balance);
+            localStorage.setItem('f_flow_final', JSON.stringify(activities));
+            refresh();
         }
 
         function changeDay(offset) { viewingDate.setDate(viewingDate.getDate() + offset); updateDayView(); }
@@ -192,37 +458,25 @@
             const legend = document.getElementById('pie-legend');
             const centerText = document.getElementById('pie-center-text');
             let stats = {}; let total = 0; let buildTotal = 0; let drainTotal = 0;
-            
-            history.forEach(s => { 
-                stats[s.name] = (stats[s.name]||0)+s.duration; 
-                total += s.duration; 
-                if(s.cat === 'deposit') buildTotal += s.duration; else drainTotal += s.duration;
-            });
-
+            history.forEach(s => { stats[s.name] = (stats[s.name]||0)+s.duration; total += s.duration; if(s.cat === 'deposit') buildTotal += s.duration; else drainTotal += s.duration; });
             if (total === 0) { pie.style.background = 'var(--empty)'; legend.innerHTML = ''; centerText.innerText = "Empty"; return; }
-            
             let sorted = Object.entries(stats).sort((a,b) => {
                 const catA = (history.find(h => h.name === a[0]) || {}).cat || 'deposit';
                 const catB = (history.find(h => h.name === b[0]) || {}).cat || 'deposit';
                 return catA === catB ? 0 : catA === 'deposit' ? -1 : 1;
             });
-
             let current = 0; let g = []; legend.innerHTML = '';
             sorted.forEach(([name, dur]) => {
                 const item = history.find(h => h.name === name);
                 const color = item && item.cat === 'withdraw' ? 'var(--withdraw)' : 'var(--accent)';
-                const p = (dur/total)*100;
-                g.push(`${color} ${current}% ${current+p}%`);
-                current+=p;
-                legend.innerHTML += `<div class="legend-item"><span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name} <span style="opacity:0.5; font-size:0.7rem;">(${Math.round(p)}%)</span></span><span style="font-weight:900;">${dur.toFixed(1)}h</span></div>`;
+                const p = (dur/total)*100; g.push(`${color} ${current}% ${current+p}%`); current+=p;
+                legend.innerHTML += `<div class="legend-item" style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--card-border); font-size:0.8rem;"><span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name} <span style="opacity:0.5; font-size:0.7rem;">(${Math.round(p)}%)</span></span><span style="font-weight:900;">${dur.toFixed(1)}h</span></div>`;
             });
-
             pie.style.background = `conic-gradient(${g.join(',')})`;
             centerText.innerHTML = `<div style="color:var(--accent)">BUILD: ${Math.round((buildTotal/total)*100)}%</div><div style="color:var(--withdraw)">DRAIN: ${Math.round((drainTotal/total)*100)}%</div><div style="margin-top:5px; opacity:0.6; font-size:0.6rem;">${total.toFixed(1)}h TOTAL</div>`;
         }
 
         function refresh() {
-            localStorage.setItem('f_flow_final', JSON.stringify(activities));
             document.getElementById('disp-bal').innerText = Math.round(balance);
             const fill = document.getElementById('fill-bar');
             const ins = document.getElementById('insight-display');
@@ -241,21 +495,25 @@
             ins.innerHTML = `<span class="status-label" style="color:${fill.style.background}">${label}</span><span class="status-desc">${desc}</span>`;
             document.getElementById('sel-act').innerHTML = activities.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
             const bList = document.getElementById('list-build'); const dList = document.getElementById('list-drain');
-            bList.innerHTML = '<span style="font-size:0.7rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 10px; display:block;">Build Activities</span>';
-            dList.innerHTML = '<span style="font-size:0.7rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 10px; display:block;">Drain Activities</span>';
+            bList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:10px 0 10px 5px; display:block; letter-spacing:1px;">Build Activities</span>';
+            dList.innerHTML = '<span style="font-size:0.6rem; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin:20px 0 10px 5px; display:block; letter-spacing:1px;">Drain Activities</span>';
             activities.forEach((a, i) => {
-                const html = `<div class="card" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;"><div><b>${a.name}</b><br><small>${a.rate} pts/hr</small></div><span style="color:#f87171; font-weight:800; cursor:pointer;" onclick="deleteAct(${i})">REMOVE</span></div>`;
+                const html = `<div class="card" onclick="openActEdit(${i})" style="padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-radius:16px;"><div><b>${a.name}</b><br><small style="color:var(--text-dim)">${a.rate} pts/hr</small></div><span style="color:var(--accent); font-size: 0.65rem; font-weight: 800; text-transform:uppercase;">Edit</span></div>`;
                 if(a.cat === 'deposit') bList.innerHTML += html; else dList.innerHTML += html;
             });
             updateDayView();
         }
 
-        function saveNewAct() {
-            const n = document.getElementById('in-name').value; const r = parseFloat(document.getElementById('in-rate').value); const c = document.getElementById('in-cat').value;
-            if(n && !isNaN(r)) { activities.push({ name: n, rate: r, cat: c }); refresh(); document.getElementById('in-name').value = ''; document.getElementById('in-rate').value = ''; }
+        function wipeAllData() {
+            if(confirm("Wipe logged history and reset balance? Your custom activities will be kept.")) {
+                history = [];
+                balance = 0;
+                localStorage.setItem('f_flow_history', JSON.stringify(history));
+                localStorage.setItem('f_flow_balance', balance);
+                refresh();
+            }
         }
-        function deleteAct(i) { if(confirm(`Remove "${activities[i].name}"?`)) { activities.splice(i, 1); refresh(); } }
-        function wipeAllData() { if(confirm("Wipe everything?")) { localStorage.clear(); location.reload(); } }
+        
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('range-from').value = todayStr;
         document.getElementById('range-to').value = todayStr;
