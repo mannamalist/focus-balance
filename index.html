@@ -167,6 +167,20 @@
         
         .btn-main:active { transform: scale(0.98); }
 
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
         .btn-danger { 
             background: transparent; 
             color: var(--withdraw); 
@@ -228,7 +242,6 @@
         .pie-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; background: var(--bg); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; text-align: center; }
         
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .duration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         label { font-size: 0.65rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 1px; }
 
         h2, h3 { letter-spacing: -0.5px; }
@@ -288,7 +301,7 @@
                     <div><label>Start Time</label><input type="time" id="start-time"></div>
                 </div>
 
-                <div class="duration-grid" style="margin-top: 10px;">
+                <div class="input-grid" style="margin-top: 10px;">
                     <div><label>Hours</label><input type="number" id="dur-hrs" value="1" min="0"></div>
                     <div><label>Minutes</label><input type="number" id="dur-mins" value="0" min="0" max="59" step="1"></div>
                 </div>
@@ -309,10 +322,19 @@
         <div id="page-reports" class="page">
             <h2 style="margin: 0 0 20px 5px;">Analytics</h2>
             <div class="card">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <input type="date" id="range-from" style="margin:0;">
-                    <input type="date" id="range-to" style="margin:0;" onchange="renderReports()">
+                <label>Date Range Filter</label>
+                <div class="input-grid" style="margin-bottom:10px;">
+                    <div>
+                        <label>From</label>
+                        <input type="date" id="range-from" style="margin:0;">
+                    </div>
+                    <div>
+                        <label>To</label>
+                        <input type="date" id="range-to" style="margin:0;">
+                    </div>
                 </div>
+                <button class="btn-secondary" onclick="renderReports()">Generate Report</button>
+                
                 <div class="pie-container" id="pie-chart"><div class="pie-hole" id="pie-center-text">Data</div></div>
                 <div id="pie-legend"></div>
             </div>
@@ -361,11 +383,15 @@
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             
-            document.getElementById('log-date').value = `${year}-${month}-${day}`;
+            const formattedDate = `${year}-${month}-${day}`;
+            document.getElementById('log-date').value = formattedDate;
             document.getElementById('start-time').value = d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
             
-            document.getElementById('range-from').value = `${year}-${month}-${day}`;
-            document.getElementById('range-to').value = `${year}-${month}-${day}`;
+            // Set stats range to current month by default
+            if (!document.getElementById('range-from').value) {
+                document.getElementById('range-from').value = `${year}-${month}-01`;
+                document.getElementById('range-to').value = formattedDate;
+            }
         };
 
         function tab(p, el) {
@@ -394,10 +420,8 @@
                 return;
             }
 
-            // Update balance
             balance = Math.max(-100, Math.min(balance + (act.rate * duration), 200));
             
-            // Add to history
             history.push({ 
                 name: act.name, 
                 duration: duration, 
@@ -408,8 +432,7 @@
             });
 
             saveAll();
-            // Switch to Day view to see the entry
-            viewingDate = new Date(dateVal + "T12:00:00"); // Center on selected date
+            viewingDate = new Date(dateVal + "T12:00:00"); 
             tab('day', document.querySelectorAll('.nav-item')[1]);
         }
 
@@ -424,14 +447,12 @@
             const list = document.getElementById('timeline-list');
             list.innerHTML = '';
             
-            // Map logs to specific hours for visualization
             let dayGrid = Array(24).fill(null).map(() => []);
 
             history.forEach((log, idx) => {
                 if (log.date === dateStr) {
                     const [h, m] = log.startTime.split(':').map(Number);
-                    const hourIdx = h;
-                    dayGrid[hourIdx].push({ ...log, idx });
+                    dayGrid[h].push({ ...log, idx });
                 }
             });
 
@@ -476,7 +497,6 @@
             const newDuration = h + (m/60);
 
             if (newDuration > 0) {
-                // Revert old points, add new points
                 balance = Math.max(-100, Math.min(balance - (log.rate * log.duration) + (log.rate * newDuration), 200));
                 history[editingLogIdx].duration = newDuration;
                 history[editingLogIdx].date = newDate;
@@ -507,12 +527,53 @@
             updateDayView(); 
         }
 
+        function renderReports() {
+            const pie = document.getElementById('pie-chart');
+            const legend = document.getElementById('pie-legend');
+            const centerText = document.getElementById('pie-center-text');
+            const from = document.getElementById('range-from').value;
+            const to = document.getElementById('range-to').value;
+
+            if (!from || !to) return;
+
+            let stats = {}; let total = 0; let buildTotal = 0; let drainTotal = 0;
+            
+            history.forEach(s => {
+                if(s.date >= from && s.date <= to) {
+                    stats[s.name] = (stats[s.name]||0)+s.duration; 
+                    total += s.duration; 
+                    if(s.cat === 'deposit') buildTotal += s.duration; else drainTotal += s.duration;
+                }
+            });
+
+            if (total === 0) { 
+                pie.style.background = 'var(--empty)'; 
+                legend.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">No activities found for this range.</div>'; 
+                centerText.innerText = "Empty"; 
+                return; 
+            }
+
+            let sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]);
+            let current = 0; let g = []; legend.innerHTML = '';
+            
+            sorted.forEach(([name, dur]) => {
+                const item = history.find(h => h.name === name);
+                const color = item && item.cat === 'withdraw' ? 'var(--withdraw)' : 'var(--accent)';
+                const p = (dur/total)*100; g.push(`${color} ${current}% ${current+p}%`); current+=p;
+                legend.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--card-border); font-size:0.8rem;">
+                    <span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name}</span>
+                    <span style="font-weight:900;">${dur.toFixed(1)}h</span>
+                </div>`;
+            });
+            pie.style.background = `conic-gradient(${g.join(',')})`;
+            centerText.innerHTML = `<div style="color:var(--accent)">+${buildTotal.toFixed(1)}h</div><div style="color:var(--withdraw)">-${drainTotal.toFixed(1)}h</div>`;
+        }
+
         function refresh() {
             document.getElementById('disp-bal').innerText = Math.round(balance);
             const fill = document.getElementById('fill-bar');
             const ins = document.getElementById('insight-display');
             
-            // Scaled 0-100 logic for UI bar
             const visualPerc = Math.max(0, Math.min(((balance + 50) / 150) * 100, 100));
             fill.style.width = visualPerc + "%";
 
@@ -522,7 +583,7 @@
             else if (balance >= 40) { fill.style.background = "var(--deposit)"; label = "Optimal"; desc = "Perfect flow state."; } 
             else if (balance >= 10) { fill.style.background = "var(--accent)"; label = "Steady"; desc = "Keep building momentum."; } 
             else if (balance >= -10) { fill.style.background = "#475569"; label = "Neutral"; desc = "System idle."; } 
-            else { fill.style.background = "var(--withdraw)"; label = "Deficit"; desc = "Drain exceeds build. Recovering..."; }
+            else { fill.style.background = "var(--withdraw)"; label = "Deficit"; desc = "Drain exceeds build."; }
             
             ins.innerHTML = `<span class="status-label" style="color:${fill.style.background}">${label}</span><span class="status-desc">${desc}</span>`;
             
@@ -543,7 +604,7 @@
             updateDayView();
         }
 
-        // --- Settings / Modal Logic for Activities ---
+        // Configuration Modal Logic
         function openActEdit(index) {
             editingActIdx = index;
             const act = activities[index];
@@ -566,61 +627,9 @@
             const n = document.getElementById('in-name').value; 
             const r = parseFloat(document.getElementById('in-rate').value); 
             const c = document.getElementById('in-cat').value;
-            if(n && !isNaN(r)) { 
-                activities.push({ name: n, rate: r, cat: c }); 
-                document.getElementById('in-name').value = ''; 
-                document.getElementById('in-rate').value = ''; 
-                saveAll(); 
-            }
+            if(n && !isNaN(r)) { activities.push({ name: n, rate: r, cat: c }); document.getElementById('in-name').value = ''; document.getElementById('in-rate').value = ''; saveAll(); }
         }
-        function wipeAllData() {
-            if(confirm("Wipe history and reset balance?")) {
-                history = []; balance = 0;
-                localStorage.setItem('f_flow_history', JSON.stringify(history));
-                localStorage.setItem('f_flow_balance', balance);
-                refresh();
-            }
-        }
-
-        function renderReports() {
-            const pie = document.getElementById('pie-chart');
-            const legend = document.getElementById('pie-legend');
-            const centerText = document.getElementById('pie-center-text');
-            const from = document.getElementById('range-from').value;
-            const to = document.getElementById('range-to').value;
-
-            let stats = {}; let total = 0; let buildTotal = 0; let drainTotal = 0;
-            
-            history.forEach(s => {
-                if(s.date >= from && s.date <= to) {
-                    stats[s.name] = (stats[s.name]||0)+s.duration; 
-                    total += s.duration; 
-                    if(s.cat === 'deposit') buildTotal += s.duration; else drainTotal += s.duration;
-                }
-            });
-
-            if (total === 0) { 
-                pie.style.background = 'var(--empty)'; 
-                legend.innerHTML = ''; 
-                centerText.innerText = "No Data"; 
-                return; 
-            }
-
-            let sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]);
-            let current = 0; let g = []; legend.innerHTML = '';
-            
-            sorted.forEach(([name, dur]) => {
-                const item = history.find(h => h.name === name);
-                const color = item && item.cat === 'withdraw' ? 'var(--withdraw)' : 'var(--accent)';
-                const p = (dur/total)*100; g.push(`${color} ${current}% ${current+p}%`); current+=p;
-                legend.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--card-border); font-size:0.8rem;">
-                    <span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:${color}"></span>${name}</span>
-                    <span style="font-weight:900;">${dur.toFixed(1)}h</span>
-                </div>`;
-            });
-            pie.style.background = `conic-gradient(${g.join(',')})`;
-            centerText.innerHTML = `<div style="color:var(--accent)">+${buildTotal.toFixed(1)}h</div><div style="color:var(--withdraw)">-${drainTotal.toFixed(1)}h</div>`;
-        }
+        function wipeAllData() { if(confirm("Wipe history and reset balance?")) { history = []; balance = 0; localStorage.setItem('f_flow_history', JSON.stringify(history)); localStorage.setItem('f_flow_balance', balance); refresh(); } }
 
         setNow();
         refresh();
